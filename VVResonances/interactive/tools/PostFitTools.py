@@ -580,16 +580,18 @@ class Postfitplotter():
 
 
         scaling = self.options.signalScaleF
+        print " ********** signal scaling : ",scaling
         eff = 0.1
         
         
         if hsig!= None: # and (self.options.name.find('sigonly')!=-1  and doFit==0):
-            print "print do hsignal ", hsig.Integral()
+            print "print do hsignal, that has integral ", hsig.Integral()
             hsig.Write(self.signalName)
-            if hsig.Integral()!=0.:   
-                hsig.Scale(scaling/normsig.getVal())
-        #        print "sig integral ",hsig.Integral()
-        #        hsig.Scale(scaling/hsig.Integral())
+            if hsig.Integral()!=0. and scaling !=0 :   
+                #hsig.Scale(scaling/normsig.getVal())
+                print "sig integral ",hsig.Integral()
+                hsig.Scale(scaling/hsig.Integral())
+            print " after rescling check integral is ",hsig.Integral()
         
             hsig.SetFillColor(ROOT.kGreen-6)
             hsig.SetLineColor(ROOT.kBlack)
@@ -727,7 +729,7 @@ class Postfitplotter():
 
         #pt2 = ROOT.TPaveText(0.125,0.79,0.99,0.4,"NDC")
         #pt2 = ROOT.TPaveText(0.55,0.35,0.99,0.32,"NDC")
-        pt2 = ROOT.TPaveText(0.6,0.38,0.99,0.58,"NDC")
+        pt2 = ROOT.TPaveText(0.4,0.38,0.99,0.58,"NDC")
         pt2.SetTextFont(42)
         pt2.SetTextSize(0.04)
         pt2.SetTextAlign(12)

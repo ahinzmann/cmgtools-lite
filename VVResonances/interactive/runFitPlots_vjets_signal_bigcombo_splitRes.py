@@ -195,10 +195,10 @@ if __name__=="__main__":
      
      if options.fit:
         fitresult = model.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))  
-        if options.label.find("sigonly")==-1:
-            fitresult_bkg_only = model_b.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))
-        else: fitresult_bkg_only = fitresult
-        fitresult.Print() 
+        #if options.label.find("sigonly")==-1:
+        #    fitresult_bkg_only = model_b.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))
+        #else: fitresult_bkg_only = fitresult
+        print " FIT RESULT ",fitresult.Print() 
         print 
         #writeLogfile(options,fitresult)
      ############################################################################################
@@ -277,6 +277,7 @@ if __name__=="__main__":
         jsonfile.close()
         if options.fitSignal:
                 signal_expected[period] = [ (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName], (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName].getPropagatedError(fitresult)]
+                fitted_r = workspace.var("r").getVal()
                 print "Fitted signal yields:",signal_expected[period][0].getVal()," +/- ", signal_expected[period][1] ,"(",period,")"
         print 
           	 	 	
@@ -284,22 +285,25 @@ if __name__=="__main__":
      logfile = open(options.output+options.log,"a::ios::ate")
      forplotting = PostFitTools.Postfitplotter(parser,logfile,signalName)
      if options.fit:
-         forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind,fitresult_bkg_only)
+         forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind,fitresult)
      else: forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind)
      #make projections onto MJJ axis 
      if options.projection =="z" or options.projection =="xyz":
          results = []
          res = forproj.doProjection(data[period],allpdfsz[period],all_expected[period],"z",allsignalpdfs[period],signal_expected[period],showallTT)
+         if options.fitSignal: workspace.var("r").setVal(fitted_r)
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo)
      #make projections onto MJ1 axis
      if options.projection =="x" or options.projection =="xyz":
          results = []
          res = forproj.doProjection(data[period],allpdfsx[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT)
+         if options.fitSignal: workspace.var("r").setVal(fitted_r)
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
      #make projections onto MJ2 axis
      if options.projection =="y" or options.projection =="xyz":
          results = []
          res = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT)
+         if options.fitSignal: workspace.var("r").setVal(fitted_r)
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
 
 
