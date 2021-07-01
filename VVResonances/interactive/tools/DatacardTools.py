@@ -907,8 +907,8 @@ class DatacardTools():
    newjson = jsonfile[0].replace('WprimeWZ','ZprimeWW')
    jsonfile[0] = newjson
    self.AddOneTaggingSystematics(card,'%sZprimeWW'%isvbf,p,jsonfile,isVVonly,doFour,dataset,lumiweight)
-  elif 'VprimeVH' in sig:
-   newjson = jsonfile[0].replace('VprimeVH','WprimeWHinc')
+  elif 'VprimeVHinc' in sig:
+   newjson = jsonfile[0].replace('VprimeVHinc','WprimeWHinc')
    jsonfile[0] = newjson
    self.AddOneTaggingSystematics(card,'%sWprimeWHinc'%isvbf,p,jsonfile,isVVonly,doFour,dataset,lumiweight)
    newjson = jsonfile[0].replace('WprimeWH','ZprimeZH')
