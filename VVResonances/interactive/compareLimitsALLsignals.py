@@ -13,7 +13,7 @@ parser.add_option("-o","--output",dest="output",default='limit_compare.root',hel
 parser.add_option("-n","--name",dest="name",default='comparisons',help="additional name for output file (include compareB2G18002 with signal BGWW to compare this analysis with 16+17 also)")
 parser.add_option("-x","--minX",dest="minX",type=float,help="minimum x",default=1.3)
 parser.add_option("-X","--maxX",dest="maxX",type=float,help="maximum x",default=6.0)
-parser.add_option("-y","--minY",dest="minY",type=float,help="minimum y",default=0.0001)
+parser.add_option("-y","--minY",dest="minY",type=float,help="minimum y",default=0.00001)
 parser.add_option("-Y","--maxY",dest="maxY",type=float,help="maximum y",default=0.1)
 parser.add_option("-b","--blind",dest="blind",type=int,help="Not do observed ",default=1)
 parser.add_option("-l","--log",dest="log",type=int,help="Log plot",default=1)
@@ -155,6 +155,12 @@ if "Vprime"  in options.sig and "WV" not in options.sig:
   titleX = "M_{V'} [TeV]"
   if "VBF" not in options.sig:
     plotCMS2016DIBcombo = True
+if "VprimeVH"  in options.sig: 
+  ltheory="#sigma_{TH}#times BR(V'#rightarrow(VH)) HVT_{"+Model+"}"
+  titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VH) [pb]  "
+  titleX = "M_{V'} [TeV]"
+  #if "VBF" not in options.sig:
+  #  plotCMS2016DIBcombo = True
 if "BulkGVV"  in options.sig:
   ltheory="#sigma_{TH}#times BR(G_{Bulk}#rightarrowVV) #tilde{k}=0.5"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"G_{Bulk} #rightarrow VV) [pb]  "
@@ -196,7 +202,7 @@ massesTeV = array('d',[i*0.1 for i in range(8,61)])
 if scaleBR:
   x, y = array( 'd' ), array( 'd' )
 
-  fin = ROOT.TFile.Open("results_Run2/workspace_JJ_"+options.sig+"_VBF_VVVH_13TeV_Run2_data_newbaseline.root","READ")
+  fin = ROOT.TFile.Open("results_Run2/AllCat_workspace/workspace_JJ_"+options.sig+"_VBF_VVVH_13TeV_Run2_data_newbaseline.root","READ")
   w = fin.Get("w")
 
 
@@ -212,6 +218,9 @@ if scaleBR:
     if oneSignal == False:
       func1 = w.function(signal1+'_JJ_VV_HPHP_13TeV_Run2_sigma')
       func2 = w.function(signal2+'_JJ_VV_HPHP_13TeV_Run2_sigma')
+      if  options.sig == 'VprimeVHinc' or options.sig == 'VBF_VprimeVHinc':
+        func1 = w.function(signal1+'inc_JJ_VV_HPHP_13TeV_Run2_sigma')
+        func2 = w.function(signal2+'inc_JJ_VV_HPHP_13TeV_Run2_sigma')
       scaleLimits[str(int(m))] = ROOT.TMath.Exp(func1.getVal(argset))+ROOT.TMath.Exp(func2.getVal(argset))
       if options.sig == 'Vprime' or options.sig == 'VBF_Vprime':
         try:
@@ -229,9 +238,16 @@ if scaleBR:
     if "prime" not in options.sig or "VBF" in options.sig:
       print " rescaling limit !!!!! "
       scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-      if (m >= 4000. and "VBF" in options.sig) or m>5000.:
+      if (m > 3000. and "VBF" in options.sig) or m>5000.:
         print "extra rescaling for high mx "
         scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+        if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.)or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 4800.)  or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) :
+          #if m > 5000. and "VBF" in options.sig:
+          print "double extra rescaling for high mx "
+          scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+          if (options.sig == "VBF_ZprimeWW" and m >= 5400.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_ZprimeZHinc" and m >= 5500.) or (options.sig == "VBF_VprimeVHinc" and m >= 5600.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_BulkGWW" and m >= 5800.) or (options.sig == "VBF_BulkGVV" and m == 6000.) or (options.sig == "VBF_WprimeWHinc" and m == 6000.) or (options.sig == "VBF_VprimeWV" and m >= 5900.) or (options.sig == "VBF_Vprime" and m >= 5600. and m<6000.)  or (options.sig == "VBF_WprimeWZ" and m == 6000.) :
+            print "triple! extra rescaling for high mx "
+            scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
 
 
 else:
@@ -330,7 +346,7 @@ if plotATLASVVsemilep:
   VVsemilepATLAS.SetLineColor(591)
   VVsemilepATLAS.SetLineStyle(2);
   VVsemilepATLAS.SetLineWidth(3);
-  leg.AddEntry(VVsemilepATLAS,"EPJC 80 (2020) 1165 (139 fb^{-1}","L") # ATLAS semilep (Run2)","L")
+  leg.AddEntry(VVsemilepATLAS,"EPJC 80 (2020) 1165 (139 fb^{-1})","L") # ATLAS semilep (Run2)","L")
 
 #### CMS B2G-19-002 semilep Run2
 if plotCMSsemilep:

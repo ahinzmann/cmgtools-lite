@@ -172,6 +172,9 @@ if options.hvt>=0: #the = is only needed to get the right xsec sf for the single
   if oneSignal == False:
    func1 = w.function(signal1+'_JJ_VV_HPHP_13TeV_'+year+'_sigma')
    func2 = w.function(signal2+'_JJ_VV_HPHP_13TeV_'+year+'_sigma')
+   if options.sig == 'VprimeVHinc' or options.sig == 'VBF_VprimeVHinc':
+    func1 = w.function(signal1+'inc_JJ_VV_HPHP_13TeV_'+year+'_sigma')
+    func2 = w.function(signal2+'inc_JJ_VV_HPHP_13TeV_'+year+'_sigma')
    scaleLimits[str(int(m))] = ROOT.TMath.Exp(func1.getVal(argset))+ROOT.TMath.Exp(func2.getVal(argset))
    if options.sig == 'Vprime' or options.sig == 'VBF_Vprime':
     try:
@@ -188,9 +191,15 @@ if options.hvt>=0: #the = is only needed to get the right xsec sf for the single
   if "prime" not in options.sig or "VBF" in options.sig:
    if options.debug:   print " rescaling limit !!!!! "
    scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-   if (m >= 4000. and "VBF" in options.sig) or m>5000.:
+   if (m > 3000. and "VBF" in options.sig) or m>5000.:
     if options.debug:    print "extra rescaling for high mx "
     scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+    if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.) or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 4800.) or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) :
+     if options.debug:    print "double extra rescaling for high mx "
+     scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+     if (options.sig == "VBF_ZprimeWW" and m >= 5400.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_ZprimeZHinc" and m >= 5500.) or (options.sig == "VBF_VprimeVHinc" and m >= 5600.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_BulkGWW" and m >= 5800.) or (options.sig == "VBF_BulkGVV" and m == 6000.) or (options.sig == "VBF_WprimeWHinc" and m == 6000.)  or (options.sig == "VBF_VprimeWV" and m >= 5900.) or (options.sig == "VBF_Vprime" and m >= 5600. and m<6000.) or (options.sig == "VBF_WprimeWZ" and m == 6000.) :
+      if options.debug:    print "triple! extra rescaling for high mx "
+      scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
 
  if oneSignal == False:
   print " initializing theory for more than 1 signal!"
@@ -723,6 +732,10 @@ if "ZprimeWW"  in options.sig:
 if "Vprime"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrowVV+VH) HVT_{"+Model+"}"
   ytitle ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VV+VH) [pb]  "
+  xtitle = "M_{V'} [TeV]"
+if "VprimeVH"  in options.sig:
+  ltheory="#sigma_{TH}#times BR(V'#rightarrowVH) HVT_{"+Model+"}"
+  ytitle ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VH) [pb]  "
   xtitle = "M_{V'} [TeV]"
 if "VprimeWV"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrowWV) HVT_{"+Model+"}"
