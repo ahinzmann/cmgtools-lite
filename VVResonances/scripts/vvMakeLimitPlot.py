@@ -194,10 +194,10 @@ if options.hvt>=0: #the = is only needed to get the right xsec sf for the single
    if (m > 3000. and "VBF" in options.sig) or m>5000.:
     if options.debug:    print "extra rescaling for high mx "
     scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-    if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.) or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 4800.) or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) :
+    if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.) or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 5000.) or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) or (options.sig == "VBF_VprimeVHinc" and m >= 4600.) or (options.sig == "VBF_Vprime" and m >= 4600.):
      if options.debug:    print "double extra rescaling for high mx "
      scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-     if (options.sig == "VBF_ZprimeWW" and m >= 5400.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_ZprimeZHinc" and m >= 5500.) or (options.sig == "VBF_VprimeVHinc" and m >= 5600.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_BulkGWW" and m >= 5800.) or (options.sig == "VBF_BulkGVV" and m == 6000.) or (options.sig == "VBF_WprimeWHinc" and m == 6000.)  or (options.sig == "VBF_VprimeWV" and m >= 5900.) or (options.sig == "VBF_Vprime" and m >= 5600. and m<6000.) or (options.sig == "VBF_WprimeWZ" and m == 6000.) :
+     if (options.sig == "VBF_ZprimeWW" and m >= 5400.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_ZprimeZHinc" and m >= 5500.) or (options.sig == "VBF_VprimeVHinc" and m >= 5600.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_BulkGWW" and m >= 5800.) or (options.sig == "VBF_BulkGVV" and m == 6000.) or (options.sig == "VBF_WprimeWHinc" and m == 6000.)  or (options.sig == "VBF_VprimeWV" and m >= 5900.) or (options.sig == "VBF_Vprime" and m >= 5600. and m<6000.) or (options.sig == "VBF_WprimeWZ" and m == 6000.):
       if options.debug:    print "triple! extra rescaling for high mx "
       scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
 
@@ -849,6 +849,45 @@ if options.blind==0:
 c.SaveAs(filename+".png")    
 c.SaveAs(filename+".pdf")    
 c.SaveAs(filename+".C")    
+
+startmass = 1.3
+outf = open('log_%s.txt'%filename,'a')
+i=startmass
+while i < 6.:
+ i+=0.01 
+ y_exp = mean.Eval(i)
+ if y_exp > gtheory.Eval(i) and i > mean.Eval(startmass) < gtheory.Eval(startmass) :
+   outf.write("Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+"\n")
+   break
+
+if options.blind==0:
+ 
+ exclMass = 0
+ i=startmass
+ while i < 6.:
+  i+=0.01 
+  y_obs = bandObs.Eval(i)
+  if y_obs > gtheory.Eval(i) and bandObs.Eval(startmass)< gtheory.Eval(startmass):
+   outf.write("Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+"\n")
+   exclMass = i
+   break
+
+ # these are needed because for some signals we are crossing the line multiple times
+ for j in range(100):
+  i=exclMass
+  while i < 6.:
+   i+=0.01
+   y_obs = bandObs.Eval(i)
+   if y_obs < gtheory.Eval(i) and bandObs.Eval(startmass)< gtheory.Eval(startmass):
+    outf.write("Observed NOT excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+"\n")
+    exclMass = i
+    break
+
+
+
+outf.close()
+
+
 
 fout=ROOT.TFile(filename+".root","RECREATE")
 fout.cd()
