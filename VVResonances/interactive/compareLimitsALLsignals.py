@@ -32,7 +32,7 @@ plotCMSsemilep = False # B2G-19-002 pas CMS semi lep Run2 WV/WH
 plotCMSsemilepZnunu = False # B2G-20-008 CMS Z(nunu)V(qq) semilep Run2
 plotCMSZHsemilep = False # B2G-19-006 CMS Z(lep) H(had) semilep Run2 http://cms-results.web.cern.ch/cms-results/public-results/publications/B2G-19-006/index.html
 plotCMS2016DIBcombo = False # B2G-18-006 2016 diboson combination https://www.hepdata.net/record/ins1737724 
-
+plotB2G17002 = False #B2G-17-002 2016 VH had https://cms-results.web.cern.ch/cms-results/public-results/publications/B2G-17-002/index.html
 (options,args) = parser.parse_args()
 #define output dictionary
 
@@ -149,7 +149,9 @@ if "VprimeWV"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrow(WV)) HVT_{"+Model+"}"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow WV) [pb]  "
   titleX = "M_{V'} [TeV]"
-if "Vprime"  in options.sig and "WV" not in options.sig:
+  if "VBF" not in options.sig:
+    plotATLASVVhad=True
+if "Vprime"  in options.sig and "WV" not in options.sig and "VHinc" not in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrow(VV+VH)) HVT_{"+Model+"}"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VV+VH) [pb]  "
   titleX = "M_{V'} [TeV]"
@@ -159,8 +161,10 @@ if "VprimeVH"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrow(VH)) HVT_{"+Model+"}"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VH) [pb]  "
   titleX = "M_{V'} [TeV]"
-  #if "VBF" not in options.sig:
-  #  plotCMS2016DIBcombo = True
+  if "VBF" not in options.sig:
+    #plotATLASVHhad=True
+    plotB2G17002=True
+    #  plotCMS2016DIBcombo = True
 if "BulkGVV"  in options.sig:
   ltheory="#sigma_{TH}#times BR(G_{Bulk}#rightarrowVV) #tilde{k}=0.5"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"G_{Bulk} #rightarrow VV) [pb]  "
@@ -180,6 +184,7 @@ if "ZprimeZH"  in options.sig:
   if "VBF" not in options.sig:
     plotCMS2016DIBcombo = True
     plotATLASVHhad = True
+    plotB2G17002 = True
 if "WprimeWH"  in options.sig:
   ltheory="#sigma_{TH}#times BR(W'#rightarrowWH) HVT_{"+Model+"}"
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"W' #rightarrow WH) [pb]  "
@@ -188,12 +193,13 @@ if "WprimeWH"  in options.sig:
     plotCMS2016DIBcombo = True
     plotCMSsemilep = True
     plotATLASVHhad = True
+    plotB2G17002= True
 title = ["This analysis"]
-files = ["Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_partial_"+limitname+".root"]
+files = ["Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_"+limitname+".root"]
 
 if options.name.find("compareB2G18002") !=-1:
   title = ["This analysis (78 fb^{-1})","This analysis (138 fb^{-1})"]
-  files = ["Limits_"+options.sig+"_13TeV_1617_data_ggDYVBF_VVVH_partial_"+limitname+".root","Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_partial_"+limitname+".root"]
+  files = ["Limits_"+options.sig+"_13TeV_1617_data_ggDYVBF_VVVH_partial_"+limitname+".root","Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_"+limitname+".root"]
 
 
 scaleLimits = {}
@@ -241,7 +247,7 @@ if scaleBR:
       if (m > 3000. and "VBF" in options.sig) or m>5000.:
         print "extra rescaling for high mx "
         scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-        if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.)or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 4800.)  or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) :
+        if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.)or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m > 4900.)  or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) :
           #if m > 5000. and "VBF" in options.sig:
           print "double extra rescaling for high mx "
           scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
@@ -259,6 +265,7 @@ else:
 
 leg = getLegend(0.3,0.6,0.8,0.9)
 leg.AddEntry(0,"95% CL exp. upper limits","")
+leg.SetLineWidth(0)
 #leg.AddEntry(0,"upper limits","")
 tgraphs = []
 for t,fname in zip(title,files):
@@ -392,6 +399,17 @@ if plotCMS2016DIBcombo:
   leg.AddEntry(CMSdib2016combo,"Phys.Lett.B 798 (2019) 134952 (36 fb^{-1})","L")
 
 
+### CMS 2016 VH had 
+if plotB2G17002:
+  thesignal=options.sig.replace("inc","")
+  CMS2016VHhad=ROOT.TGraph("Limits_B2G-17-002/limit_"+thesignal+"_2016_B2G_17_002.txt","%lg %lg")
+  CMS2016VHhad.SetTitle("");
+  CMS2016VHhad.SetLineColor(594);
+  CMS2016VHhad.SetLineStyle(6);
+  CMS2016VHhad.SetLineWidth(3);
+  CMS2016VHhad.SetMarkerStyle(20);
+  leg.AddEntry(CMS2016VHhad,"EPJ C 77 (2017) 636 (36 fb^{-1})","L")
+
 #plotting information
 H_ref = 800; 
 W_ref = 800; 
@@ -452,6 +470,7 @@ if plotCMSsemilep: CMS19002semilep.Draw("Lsame")
 if plotCMSsemilepZnunu: CMSZnunuV20008.Draw("Lsame")
 if plotCMSZHsemilep: CMSZlepH19006.Draw("Lsame")
 if plotCMS2016DIBcombo: CMSdib2016combo.Draw("Lsame")
+if plotB2G17002: CMS2016VHhad.Draw("Lsame")
 
 for i,g in enumerate(tgraphs):
 	g.SetLineStyle(tline[i])
@@ -475,6 +494,7 @@ cmslabel_prelim(c,options.period,11)
 c.SaveAs("compareLimits_"+oname+".png")
 c.SaveAs("compareLimits_"+oname+".pdf")
 c.SaveAs("compareLimits_"+oname+".root")
+c.SaveAs("compareLimits_"+oname+".C")
 sleep(2)
 f.Close()
 
