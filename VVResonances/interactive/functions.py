@@ -108,6 +108,8 @@ class AllFunctions():
    command = "vvMake1DMVVTemplateVjets.py"
   if (name.find("WJets")!=-1 or name.find("ZJets")!=-1) and doFitTempl==True:
    command = "vvMake1DMVVfitTemplateVjets.py"
+  if (name.find("WZ")!=-1 or name.find("ZZ")!=-1) and doFitTempl==True:
+   command = "vvMake1DMVVfitTemplateVZ.py"
   print command
 
   pwd = os.getcwd()
@@ -424,7 +426,31 @@ class AllFunctions():
      print str(cmd)
      os.system(cmd)
 
- def fitTT(self,filename,template,xsec=1):
+ def fitVZJets(self,filename,template,leg,fixPars,addcuts="1"):
+   for c in self.categories:
+     if 'VBF' in c: cut='*'.join([self.cuts['common_VBF'],self.cuts[c.replace('VBF_','')],self.cuts['acceptance']])
+     else: cut='*'.join([self.cuts['common_VV'],self.cuts[c],self.cuts['acceptance']])
+     rootFile=filename+"_MJ"+leg+"_NP.root"
+     pwd = os.getcwd()
+     folders=[]
+     folders= self.samples.split(',')
+     directory= ""
+     for s in folders:
+      directory+=pwd +"/"+s
+      if s != folders[-1]: directory+=","
+      print "Using files in" , directory
+
+     print self.cuts["acceptance"]
+     fixPars="1"  #"n:0.8,alpha:1.9"
+     #fixPars=fixPars["NP"]["fixPars"]
+     cmd='vvMakeVZShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_{leg}_softDrop_mass"  -m {minMJ} -M {maxMJ} -f "{fixPars}"  --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} {samples} '.format(template=template,cut=cut,rootFile=rootFile,leg=leg,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity="NP",minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",samples=directory,fixPars=fixPars)
+     cmd+=self.HCALbinsMVV
+     print "going to execute command: "
+     print str(cmd)
+     os.system(cmd)
+
+
+ def fitTT(self,filename,template,xsec=1,prelim="prelim"):
    for c in self.categories:
      print("\r"+"Fitting ttbar in category %s for template %s" %(c,template))
      if 'VBF' in c: 
@@ -442,7 +468,7 @@ class AllFunctions():
      print "Using files in" , directory
 
      fixPars="1" 
-     cmd='vvMakeTTShapes.py -s "{template}" -c "{cut}"  -o "{outname}" -m {minMJ} -M {maxMJ} --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} --corrFactor {xsec} {samples}'.format(template=template,cut=cut,outname=outname,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity=c,minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",xsec=xsec, samples=directory)
+     cmd='vvMakeTTShapes.py -s "{template}" -c "{cut}"  -o "{outname}" -m {minMJ} -M {maxMJ} --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} --corrFactor {xsec} {samples} --prelim {prelim}'.format(template=template,cut=cut,outname=outname,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity=c,minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",xsec=xsec, samples=directory, prelim=prelim)
      cmd+=self.HCALbinsMVV
      os.system(cmd)
      
