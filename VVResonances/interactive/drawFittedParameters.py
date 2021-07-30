@@ -157,6 +157,8 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
     l2.Draw("same")
     if prelim.find("prelim")!=-1:
          cmslabel_sim_prelim(c,'sim',11)
+    elif prelim.find("thesis")!=-1:
+        cmslabel_thesis(c,'sim',11)
     else:
          cmslabel_sim(c,'sim',11)
     
@@ -454,13 +456,15 @@ def doJetMass(leg,signals,titles,categories):
                 print fLP.GetName()
                 gHPLP = fLP.Get(var+"H")
                 fHPLP = fLP.Get(var+"H_func")
+
            gHPHP = fHP.Get(var)
            fHPHP = fHP.Get(var+"_func")
+
            
-           beautify(fHPLP ,rt.TColor.GetColor(colors[i]),2,24)
-           beautify(fHPHP ,rt.TColor.GetColor(colors[i]),1,8)
-           beautify(gHPLP ,rt.TColor.GetColor(colors[i]),2,24)
-           beautify(gHPHP ,rt.TColor.GetColor(colors[i]),1,8)
+           beautify(fHPLP ,rt.TColor.GetColor(colors[i]),2,markerstyle[i])
+           beautify(fHPHP ,rt.TColor.GetColor(colors[i]),1,markerstyle[i])
+           beautify(gHPLP ,rt.TColor.GetColor(colors[i]),2,markerstyle[i])
+           beautify(gHPHP ,rt.TColor.GetColor(colors[i]),1,markerstyle[i])
            datas.append(gHPHP)
            datasHjet.append(gHPLP)
            fits.append(fHPHP)
@@ -492,11 +496,13 @@ def doJetMass(leg,signals,titles,categories):
            gHP.Draw("Psame")
            fits[i].Draw("Csame")
            fitsHjet[i].Draw("Csame")
-       datas[0].GetXaxis().SetRangeUser(1126, 6000.)
+       datas[0].GetXaxis().SetRangeUser(1126, 6050.)
        l.Draw("same")
        l2.Draw("same")
        if prelim.find("prelim")!=-1:
            cmslabel_sim_prelim(c,'sim',11)
+       elif prelim.find("thesis")!=-1:
+           cmslabel_thesis(c,'sim',11)
        else:
            cmslabel_sim(c,'sim',11)
        pt = getPavetext()
@@ -600,20 +606,26 @@ def doMVV(signals,titles,year):
                 
                 # gHPLP = fLP.Get(var)
                 gHPHP = fHP.Get(var)
+
                 # fHPLP = fLP.Get(var+"_func")
                 fHPHP = fHP.Get(var+"_func")
-                # gHPLP.GetFunction(var+"_func").SetBit(rt.TF1.kNotDraw)
+                fHPHP.SetLineWidth(0)
+
+                ff=  gHPHP.GetFunction(var+"_func")
+                ff.SetLineColor(0)
+                ff.SetLineWidth(0)
+
                 #gHPHP.GetFunction(var+"_func").SetBit(rt.TF1.kNotDraw)
                 
                 # beautify(fHPLP ,rt.TColor.GetColor(colors[i]),9,1)
-                beautify(fHPHP ,rt.TColor.GetColor(colors[i]),1,8)
+                beautify(fHPHP ,rt.TColor.GetColor(colors[i]),1,markerstyle[i])
                 # beautify(gHPLP ,rt.TColor.GetColor(colors[i]),9,1)
-                beautify(gHPHP ,rt.TColor.GetColor(colors[i]),1,8)
+                beautify(gHPHP ,rt.TColor.GetColor(colors[i]),1,markerstyle[i])
                 datasHP.append(gHPHP)
                 # datasLP.append(gHPLP)
                 fitsHP.append(fHPHP)
                 # fitsLP.append(fHPLP)
-                l.AddEntry(fHPHP,titles[i],"L")
+                l.AddEntry(fHPHP,titles[i],"LP")
         # l2.AddEntry(datasHP[0],"No JER","L")
  #        l2.AddEntry(datasLP[0],"JER","L")
         datasHP[0].GetXaxis().SetTitle("M_{X} [GeV]")
@@ -642,12 +654,15 @@ def doMVV(signals,titles,year):
             # fitsLP[i].Draw("Csame")
         l.Draw("same")
         # l2.Draw("same")
-        cmslabel_sim_prelim(c,'sim',11)
+        if prelim.find("thesis")!=-1:
+            cmslabel_thesis(c,'sim',11)
+        else:
+            cmslabel_sim_prelim(c,'sim',11)
         pt = getPavetext()
         c.Update()
         vbfsig = ""
         if "VBF" in signals[0]: vbfsig = "VBFsig"
-        outname=path+"Signal"+vbfsig+"_mVV_"+var+"_"+year
+        outname=path+"Signal"+vbfsig+"_mVV_"+var+"_"+year+prelim
         c.SaveAs(outname+".png")
         c.SaveAs(outname+".pdf")
         c.SaveAs(outname+".C")
