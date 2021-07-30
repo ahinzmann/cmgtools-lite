@@ -2,13 +2,13 @@ void PlotPulls()
 {
 
   int nfiles = 1;
-  TString label="Run2_VBFggDY_newbaseline";
-  const int nlabels = 106; // number of nuissance parameters
+  TString label="data_Run2_VBFggDY_afterpreapproval_TTkernels_WprimeWZ_3000";
+  const int nlabels = 101; // number of nuissance parameters
   std::string labels[nlabels] = {""};
   // To get the fitDiagnostics.root file run ~ this command  'combine -M FitDiagnostics -m 2000 results_2016/workspace_JJ_BulkGWW_VH_NPHP_control_region_13TeV_2016_newdata.root -v 2 --noErrors --minos none' on the workspace
-  TFile* tf = new TFile("fitDiagnostics.root","READ");
+  TFile* tf = new TFile("fitDiagnosticsdata_Run2_VBFggDY_afterpreapproval_TTkernels_WprimeWZ_3000.root","READ");
   tf->ls();
-  
+
   int np = 0;
   Double_t x_np_s[nlabels] = {0};
   Double_t x_np_b[nlabels] = {0};
@@ -17,9 +17,9 @@ void PlotPulls()
   Double_t x_errs_b[nlabels] = {0};
   Double_t y_errs[nlabels] = {0};
 
-  TGraphErrors* np_gr_s = new TGraphErrors(nlabels+1);
+  TGraphErrors* np_gr_s = new TGraphErrors(nlabels);
   np_gr_s->SetName("s_plus_b");
-  TGraphErrors* np_gr_b = new TGraphErrors(nlabels+1);
+  TGraphErrors* np_gr_b = new TGraphErrors(nlabels);
   np_gr_b->SetName("b_only");
   
   RooArgSet* prefit = (RooArgSet*)tf->Get("nuisances_prefit") ;
@@ -35,7 +35,7 @@ void PlotPulls()
     RooRealVar* nuis_p = (RooRealVar*)prefit->find(name.c_str());
     std:: cout << k << std::endl;
     if( std::string(param_s->GetName()) == "r" ){
-
+      continue;
       std::cout << name << " " << param_s->getVal() << " " << param_s->getError() << " " << (param_s->getVal()-10.0)/param_s->getError() << std::endl;
       double pull_s = 0;//(param_s->getVal()-0.0)/param_s->getError();
       double pull_b = 0;
