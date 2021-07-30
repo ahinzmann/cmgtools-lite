@@ -193,7 +193,7 @@
 
     "fixParsSig" : {"ZprimeZH":{
     "NP":{"fixPars":"alpha:0.8,alpha2:2.0,alphaH:0.6","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2,meanH:spline,sigmaH:spline,alphaH:spline,nH:spline,alpha2H:pol2,n2H:pol2"}},
-     "ZprimeZHinc":{"NP":{"fixPars":"n:7,nH:7,alpha:0.8,alpha2:2.0,alphaH:0.6","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2,meanH:spline,sigmaH:spline,alphaH:spline,nH:spline,alpha2H:pol2,n2H:pol2"}},
+     "ZprimeZHinc":{"NP":{"fixPars":"n:7,alpha:0.8,alpha2:2.0,alphaH:0.6","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2,meanH:spline,sigmaH:spline,alphaH:spline,nH:spline,alpha2H:pol2,n2H:pol2"}},
     "BulkGWW":{"NP":{"fixPars":"n:5,alpha:1","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2"}},
     "BulkGZZ":{"NP":{"fixPars":"n:3.6,alpha:1","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2"}},
     "RadionWW":{"NP":{"fixPars":"n:5,alpha:1","pol":"mean:spline,sigma:spline,alpha:pol1,n:pol1,alpha2:pol2,n2:pol2"}},
