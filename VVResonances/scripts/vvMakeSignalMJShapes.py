@@ -177,6 +177,7 @@ for mass in sorted(complete_mass.keys()):
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Save()])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save()])
     fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+"_"+str(mass)+".png")
+    fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+"_"+str(mass)+".C")
 
     for var,graph in graphs.iteritems():
         value,error=fitter.fetch(var)
