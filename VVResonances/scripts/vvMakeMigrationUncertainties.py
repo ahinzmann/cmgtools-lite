@@ -332,6 +332,12 @@ def calcfinalUnc(final,tag,cats):
                     tmplistu[i]+= ratioup[m+"."+cat]
                     tmplistd[i]+= ratiodown[m+"."+cat]
                 i+=1
+            else:
+              # added when processing diboson samples, low number of events. I was getting nom=zero
+              ratiodown.update({m+"."+cat:1.})
+              ratioup.update({m+"."+cat:1.})
+              tmp+= str(round(float(ratiodown[m+"."+cat]),2))+' / '+str(round(float(ratioup[m+"."+cat]),2))
+
             tmp+='   '
             
         print tmp
@@ -344,8 +350,6 @@ def calcfinalUnc(final,tag,cats):
             data[c+'_down']= round(tmplistd[i]/float(len(masses)),2)
         else:
             for m in masses:
-                #print " is it working ? ", str(m)
-                #print " ratioup[m]  ",ratioup[m] 
                 data[str(m)+'.'+c+'_up']= round(ratioup[m+'.'+c],2)
                 data[str(m)+'.'+c+'_down']= round(ratiodown[m+'.'+c],2)
         i+=1
