@@ -12,7 +12,7 @@ ROOT.gROOT.ProcessLine(".x tdrstyle.cc");
 class Postfitplotter():
     logfile = ""
     options = None
-    colors = [ROOT.kGray+2,ROOT.kRed,ROOT.kBlue,ROOT.kMagenta,210,ROOT.kOrange,ROOT.kViolet,ROOT.kAzure,ROOT.kTeal,ROOT.kGreen,ROOT.kBlack]
+    colors = [ROOT.kGray+2,ROOT.kRed,ROOT.kBlue,ROOT.kMagenta,210,ROOT.kOrange,ROOT.kViolet,ROOT.kAzure,ROOT.kTeal,ROOT.kGreen,ROOT.kBlack,ROOT.kPink,ROOT.kMagenta]
     signalName = "BulkG"
     def __init__(self,optparser,logfile,signalName,backuplabel=""):
         print "initialize plotter"
@@ -77,6 +77,11 @@ class Postfitplotter():
         except AttributeError:
             optparser.add_option("--addTop",dest="addTop",default=False)
             self.options = optparser.parse_args()[0]
+        try:
+            self.options.addDIB
+        except AttributeError:
+            optparser.add_option("--addDIB",dest="addDIB",default=False)
+            self.options = optparser.parse_args()[0]
               
         
         
@@ -96,7 +101,14 @@ class Postfitplotter():
         except AttributeError:
             optparser.add_option("--prelim",dest="prelim",default="Preliminary")
             self.options = optparser.parse_args()[0]
-            
+
+        try:
+            self.options.plotbonly
+        except AttributeError:
+            optparser.add_option("--plotbonly",dest="plotbonly",default=False)
+            self.options = optparser.parse_args()[0]
+
+
         try: 
             self.options.pdfy
         except AttributeError:
@@ -451,7 +463,7 @@ class Postfitplotter():
 
 
 
-    def MakePlots(self,histos,hdata,hsig,axis,nBins,maxY=-1.,normsig = 1.,errors=None,pseudo=False,binwidth=2):
+    def MakePlots(self,histos,hdata,hsig,axis,nBins,maxY=-1.,normsig = 1.,errors=None,pseudo=False,both=False,binwidth=4):
         print histos
         extra1 = ''
         extra2 = ''
@@ -490,13 +502,18 @@ class Postfitplotter():
             extra2 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(yrange.split(',')) == 4:
                 extra2 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
+            if both == True:
+                extra1 = xrange.split(',')[0]+' < m_{jet1/2} < '+ xrange.split(',')[1]+' GeV'
+                extra2 = yrange.split(',')[0]+' < m_{jet2/1} < '+ yrange.split(',')[1]+' GeV'
         elif axis=='x':
             print "make X projection"
             htitle = "X-Proj. y : "+self.options.yrange+" z : "+self.options.zrange
             hhtitle = self.options.channel
             xtitle = " m_{jet1} [GeV]"
             ymin = 0.02
-            ymax = hdata.GetMaximum()*1.8#max(hdata.GetMaximum()*1.3,maxY*1.3)
+            ymax = hdata.GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
+            if "VBF" in self.options.channel:
+                ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
             extra1 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(yrange.split(',')) == 4:
                 extra1 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra1 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
@@ -507,7 +524,10 @@ class Postfitplotter():
             hhtitle = self.options.channel
             xtitle = " m_{jet2} [GeV]"
             ymin = 0.02
-            ymax = hdata.GetMaximum()*1.8#max(hdata.GetMaximum()*1.3,maxY*1.3)
+            ymax = hdata.GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
+            if "VBF" in self.options.channel:
+                ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
+
             extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(xrange.split(',')) == 4:
                 extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
@@ -515,8 +535,8 @@ class Postfitplotter():
                     
         #leg = ROOT.TLegend(0.450436242,0.5531968,0.7231544,0.8553946)
         #leg = ROOT.TLegend(0.55809045,0.3063636,0.7622613,0.8520979)
-        leg = ROOT.TLegend(0.55,0.55,0.82,0.86)
-        leg.SetTextSize(0.05)
+        leg = ROOT.TLegend(0.45,0.45,0.82,0.88)
+        leg.SetTextSize(0.045)
         c = self.get_canvas('c')
         pad1 = self.get_pad("pad1") #ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
         if axis == 'z': pad1.SetLogy()
@@ -554,6 +574,11 @@ class Postfitplotter():
             if self.options.addTop:
                 histos[3].SetLineColor(self.colors[3])
                 histos[3].SetLineWidth(2)
+            if self.options.addDIB:
+                histos[4].SetLineColor(self.colors[4])
+                histos[4].SetLineWidth(2)
+                histos[5].SetLineColor(self.colors[5])
+                histos[5].SetLineWidth(2)
             
         for i in range(4,len(histos)):
             histos[i].SetLineColor(self.colors[i])
@@ -576,9 +601,7 @@ class Postfitplotter():
             errors[0].SetMarkerSize(0)
         
         
-        #change this scaling in case you don't just want to plot signal! has to match number of generated signal events
-
-
+        #change this scaling in case you don't want to plot signal! has to match number of generated signal events
         scaling = self.options.signalScaleF
         print " ********** signal scaling : ",scaling
         eff = 0.1
@@ -633,7 +656,17 @@ class Postfitplotter():
             leg.AddEntry(hdata,"Simulation","ep")
             hdata.Write("Simulation")
         #leg.AddEntry(histos[0],"Signal+background fit","l")
-        if "ttbar" not in self.options.output: leg.AddEntry(histos[0],"Background fit","l")
+        #if "ttbar" not in self.options.output:
+            #leg.AddEntry(histos[0],"Background fit","l")
+        if self.options.fitSignal==False or self.options.plotbonly==True:
+            print " &&&&&&&& b only "
+            leg.AddEntry(histos[0],"Background fit","l")
+        elif self.options.fitSignal==True and self.options.plotbonly==False:
+            leg.AddEntry(histos[0],"Signal+background fit","l")
+            print " &&&&&&&& s+b only "
+        else:
+            print " &&&&&&&& else-> b only "
+            leg.AddEntry(histos[0],"Background fit","l")
         histos[0].Write("BackgroundFit")
         if errors!=None:
             leg.AddEntry(errors[0],"#pm 1#sigma unc.","f")
@@ -663,48 +696,73 @@ class Postfitplotter():
         if len(histos)>2:
             if self.options.addTop: leg.AddEntry(histos[3],"t#bar{t}","l"); print "all ttbar ", histos[3].Integral() ; nevents["TTbarall"] = histos[3].Integral()
             histos[3].Write("TTbarall")
-            if len(histos)>4:
-                if self.options.addTop: leg.AddEntry(histos[4],"res Top","l") ; print "res top ", histos[4].Integral(); nevents["resT"] = histos[4].Integral()
-                histos[4].Write("TTbar_2resT")
-                if self.options.addTop: leg.AddEntry(histos[5],"res W","l") ; print "res W  ", histos[5].Integral() ; nevents["resW"] = histos[5].Integral()
-                histos[5].Write("TTbar_2resW")
-                if self.options.addTop: leg.AddEntry(histos[6],"nonres Top","l") ; print "nonres top ", histos[6].Integral() ; nevents["nonresT"] = histos[6].Integral()
-                histos[6].Write("TTbar_nonresonant")
-                if self.options.addTop: leg.AddEntry(histos[7],"nonres Top + res Top","l") ; print "resT nonres T ", histos[7].Integral() ; nevents["resTnonresT"] = histos[7].Integral()
-                histos[7].Write("TTbar_resTnonresT")
-                if self.options.addTop: leg.AddEntry(histos[8],"nonres Top + res W","l"); print "res W nonresT ", histos[8].Integral(); nevents["resWnonresT"] = histos[8].Integral()
-                histos[8].Write("TTbar_resWnonresT")
-                if self.options.addTop: leg.AddEntry(histos[9],"res T + res W","l") ; print "resW resT ", histos[9].Integral(); nevents["resTresW"] = histos[9].Integral()
-                histos[9].Write("TTbar_resTresW")
-        
+            if len(histos)>6 and self.options.addDIB == False:
+                if self.options.addTop: leg.AddEntry(histos[6],"res Top","l") ; print "res top ", histos[6].Integral(); nevents["resT"] = histos[6].Integral()
+                histos[6].Write("TTbar_2resT")
+                if self.options.addTop: leg.AddEntry(histos[7],"res W","l") ; print "res W  ", histos[7].Integral() ; nevents["resW"] = histos[7].Integral()
+                histos[7].Write("TTbar_2resW")
+                if self.options.addTop: leg.AddEntry(histos[8],"nonres Top","l") ; print "nonres top ", histos[8].Integral() ; nevents["nonresT"] = histos[8].Integral()
+                histos[8].Write("TTbar_nonresonant")
+                if self.options.addTop: leg.AddEntry(histos[9],"nonres Top + res Top","l") ; print "resT nonres T ", histos[9].Integral() ; nevents["resTnonresT"] = histos[9].Integral()
+                histos[9].Write("TTbar_resTnonresT")
+                if self.options.addTop: leg.AddEntry(histos[10],"nonres Top + res W","l"); print "res W nonresT ", histos[10].Integral(); nevents["resWnonresT"] = histos[10].Integral()
+                histos[10].Write("TTbar_resWnonresT")
+                if self.options.addTop: leg.AddEntry(histos[11],"res T + res W","l") ; print "resW resT ", histos[11].Integral(); nevents["resTresW"] = histos[11].Integral()
+                histos[11].Write("TTbar_resTresW")
+        if len(histos)>3:
+            if self.options.addDIB:
+                leg.AddEntry(histos[4],"WZ","l"); print "WZ ", histos[4].Integral() ; nevents["WZ"] = histos[4].Integral()
+                leg.AddEntry(histos[5],"ZZ","l"); print "ZZ ", histos[5].Integral() ; nevents["ZZ"] = histos[5].Integral()
+                histos[4].Write("WZ")
+                histos[5].Write("ZZ")
 
-        text = "G_{bulk} (%.1f TeV) #rightarrow WW (#times %i)"%(self.options.signalMass/1000.,scaling)
+        text = "G_{bulk} (%.1f TeV) #rightarrow WW"%(self.options.signalMass/1000.)
         if (self.options.signalMass%1000.)==0:
-            text = "G_{bulk} (%i TeV) #rightarrow WW (#times %i)"%(self.options.signalMass/1000.,scaling) 
+            text = "G_{bulk} (%i TeV) #rightarrow WW"%(self.options.signalMass/1000.)
+
+        if self.signalName.find("BulkGZZ")!=-1:
+            text = "G_{bulk} (%.1f TeV) #rightarrow ZZ"%(self.options.signalMass/1000.)
+            if (self.options.signalMass%1000.)==0:
+                text = "G_{bulk} (%i TeV) #rightarrow ZZ"%(self.options.signalMass/1000.)
+
+        if self.signalName.find("RadionWW")!=-1:
+            text = "Rad (%.1f TeV) #rightarrow WW"%(self.options.signalMass/1000.)
+            if (self.options.signalMass%1000.)==0:
+                text = "Rad (%i TeV) #rightarrow WW"%(self.options.signalMass/1000.)
+
+        if self.signalName.find("RadionZZ")!=-1:
+            text = "Rad (%.1f TeV) #rightarrow ZZ"%(self.options.signalMass/1000.)
+            if (self.options.signalMass%1000.)==0:
+                text = "Rad (%i TeV) #rightarrow ZZ"%(self.options.signalMass/1000.)
         
         if self.signalName.find("ZprimeWW")!=-1:
-            text = "Z' (%.1f TeV) #rightarrow WW (#times %i)"%(self.options.signalMass/1000.,scaling)
+            text = "Z' (%.1f TeV) #rightarrow WW"%(self.options.signalMass/1000.)
             if (self.options.signalMass%1000.)==0:
-                text = "Z' (%i TeV) #rightarrow WW (#times %i)"%(self.options.signalMass/1000.,scaling) 
+                text = "Z' (%i TeV) #rightarrow WW"%(self.options.signalMass/1000.)
                 
         if self.signalName.find("ZprimeZH")!=-1:
-            text = "Z' (%.1f TeV) #rightarrow ZH (#times %i)"%(self.options.signalMass/1000.,scaling)
+            text = "Z' (%.1f TeV) #rightarrow ZH"%(self.options.signalMass/1000.)
             if (self.options.signalMass%1000.)==0:
-                text = "Z' (%i TeV) #rightarrow ZH (#times %i)"%(self.options.signalMass/1000.,scaling) 
+                text = "Z' (%i TeV) #rightarrow ZH"%(self.options.signalMass/1000.)
                 
                 
         if self.signalName.find("WprimeWZ")!=-1:
-            text = "W' (%.1f TeV) #rightarrow WZ (#times %i)"%(self.options.signalMass/1000.,scaling)
+            text = "W' (%.1f TeV) #rightarrow WZ"%(self.options.signalMass/1000.)
             if (self.options.signalMass%1000.)==0:
-                text = "W' (%i TeV) #rightarrow WZ (#times %i)"%(self.options.signalMass/1000.,scaling) 
+                text = "W' (%i TeV) #rightarrow WZ"%(self.options.signalMass/1000.)
                 
         if self.signalName.find("WprimeWH")!=-1:
-            text = "W' (%.1f TeV) #rightarrow WH (#times %i)"%(self.options.signalMass/1000.,scaling)
+            text = "W' (%.1f TeV) #rightarrow WH"%(self.options.signalMass/1000.)
             if (self.options.signalMass%1000.)==0:
-                text = "W' (%i TeV) #rightarrow WH (#times %i)"%(self.options.signalMass/1000.,scaling) 
-        
+                text = "W' (%i TeV) #rightarrow WH"%(self.options.signalMass/1000.)
+
+        rescaletext = "(#times %i)"%scaling
+        if self.signalName.find("VBF") !=-1:
+            text = "VBF "+text
+
         if self.options.fitSignal==True: 
             leg.AddEntry(hsig,text,"F")
+            leg.AddEntry(hsig,rescaletext,"")
         leg.Draw("same")
         
         #errors[0].Draw("E2same")
@@ -729,14 +787,17 @@ class Postfitplotter():
 
         #pt2 = ROOT.TPaveText(0.125,0.79,0.99,0.4,"NDC")
         #pt2 = ROOT.TPaveText(0.55,0.35,0.99,0.32,"NDC")
-        pt2 = ROOT.TPaveText(0.4,0.38,0.99,0.58,"NDC")
+        pt2 = ROOT.TPaveText(0.4,0.38,0.99,0.44,"NDC")
         pt2.SetTextFont(42)
         pt2.SetTextSize(0.04)
         pt2.SetTextAlign(12)
         pt2.SetFillColor(0)
         pt2.SetBorderSize(0)
         pt2.SetFillStyle(0)
-        pt2.AddText(self.options.channel.replace('_control_region','')+" category")
+        categorystring= self.options.channel.replace('_control_region','').replace("_"," ")
+        if categorystring.find("VBF")==-1: "DY/gg "+categorystring
+        print " categorystring ",categorystring
+        pt2.AddText(categorystring+" category")
         #pt2.AddText("category  "+self.options.channel)
         pt2.Draw()
 
@@ -860,6 +921,8 @@ class Projection():
     htot_nonres = None
     htot_Wres = None
     htot_Zres = None
+    htot_WZ = None
+    htot_ZZ = None
     htot_TTJets = None
     htot_TTJetsTop = None
     htot_TTJetsW = None
@@ -874,7 +937,7 @@ class Projection():
     maxYaxis = 0
     fitres = None
     
-    def __init__(self,hinMC,opt_range,workspace,doFit,isBlinded=False,fitres=None):
+    def __init__(self,hinMC,opt_range,workspace,doFit,isBlinded=False,plotBonly=False,fitres=None):
         self.doFit = doFit
         self.fitres = fitres
         self.workspace = workspace
@@ -1002,7 +1065,7 @@ class Projection():
         return result
 
 
-    def doProjection(self,data,pdfs,norms,axis,pdf_sig=None,norm_sig=0,show_all=False):
+    def doProjection(self,data,pdfs,norms,axis,pdf_sig=None,norm_sig=0,show_all=False,plotBonly=False):
         self.neventsPerBin_1 = {}
         self.h=[]
         self.hfinals = []
@@ -1079,6 +1142,8 @@ class Projection():
         self.htot_TTJetsWnonresT  = ROOT.TH1F("htot_TTJetsWnonresT"+axis,"htot_TTJetsWnonresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
         self.htot_TTJetsresTresW= ROOT.TH1F("htot_TTJetsresTresW"+axis,"htot_TTJetsresTresW"+axis,len(self.Binslowedge)-1,self.Binslowedge)
         self.htot_TTJetsresWresT= ROOT.TH1F("htot_TTJetsresWresT"+axis,"htot_TTJetsresWresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+        self.htot_WZ = ROOT.TH1F("htot_WZ"+axis,"htot_WZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+        self.htot_ZZ = ROOT.TH1F("htot_ZZ"+axis,"htot_ZZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
         
         for p in pdfs:
             self.h.append( ROOT.TH1F("h_"+p.GetName(),"h_"+p.GetName(),len(self.Binslowedge)-1,self.Binslowedge))
@@ -1120,12 +1185,17 @@ class Projection():
                             self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsWNonResT"][0].getVal()
                         if "TTJetsResWResT_" in str(p.GetName()) :
                             self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsResWResT"][0].getVal()    #; print norms["TTJetsResWResT"][0].getVal()
+                        if "WZ" in str(p.GetName()) :
+                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["WZ"][0].getVal()
+                        if "ZZ" in str(p.GetName()) :
+                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["ZZ"][0].getVal()
+
                         i+=1
                     if pdf_sig!=None:
                         self.lv1_sig[0][kv] += pdf_sig.getVal(self.args_ws)*binV
-        return self.fillHistos(pdfs,data,norms,pdf_sig,norm_sig,show_all)
+        return self.fillHistos(pdfs,data,norms,pdf_sig,norm_sig,show_all,plotBonly)
         
-    def fillHistos(self,pdfs,data,norms,pdf_sig=None,norm_sig=None,show_all=False):
+    def fillHistos(self,pdfs,data,norms,pdf_sig=None,norm_sig=None,show_all=False,plotBonly=False):
         print " make Projection ", self.axis
         for i in range(0,len(pdfs)):
             for ik,iv in self.Bins_redux.iteritems():
@@ -1149,6 +1219,8 @@ class Projection():
                 elif "TTJetsresWresT" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresWresT.Fill(iv,self.lv[i][iv])
                 elif "TTJetsResWResT_" in str(pdfs[i].GetName()):
                     self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresTresW.Fill(iv,self.lv[i][iv]);
+                elif "WZ" in str(pdfs[i].GetName()) : self.htot_WZ.Fill(iv,self.lv[i][iv]);
+                elif "ZZ" in str(pdfs[i].GetName()) : self.htot_ZZ.Fill(iv,self.lv[i][iv]);
                 
                 else: self.h[i].Fill(iv,tmp);
         
@@ -1159,15 +1231,20 @@ class Projection():
         self.htot.Add(self.htot_nonres)
         if self.htot_Wres!=None: self.htot.Add(self.htot_Wres)
         if self.htot_Zres!=None: self.htot.Add(self.htot_Zres)
+        if self.htot_WZ!=None: self.htot.Add(self.htot_WZ)
+        if self.htot_ZZ!=None: self.htot.Add(self.htot_ZZ)
         if self.htot_TTJets!=None: self.htot.Add(self.htot_TTJets)
-        if self.htot_sig!=None: self.htot.Add(self.htot_sig); 
+        if self.htot_sig!=None and plotBonly == False: self.htot.Add(self.htot_sig);
         print "htot sig ",str(self.htot_sig.Integral())
         print "htot integral" , self.htot.Integral()
         print "htot_Wres integral" , self.htot_Wres.Integral()
+        print "htot_WZ integral" , self.htot_WZ.Integral()
         self.hfinals.append(self.htot)
         if self.htot_Wres!=None: self.hfinals.append(self.htot_Wres)
         if self.htot_Zres!=None: self.hfinals.append(self.htot_Zres)
         if self.htot_TTJets!=None: self.hfinals.append(self.htot_TTJets)
+        if self.htot_WZ!=None: self.hfinals.append(self.htot_WZ)
+        if self.htot_ZZ!=None: self.hfinals.append(self.htot_ZZ)
         if show_all:
             if self.htot_TTJetsTop!=None: self.hfinals.append(self.htot_TTJetsTop)
             if self.htot_TTJetsW!=None: self.hfinals.append(self.htot_TTJetsW)
@@ -1192,9 +1269,19 @@ class Projection():
             allbkg = True
         except:
             allbkg = False
-        if allbkg == True:
+        try:
+            norms["WZ"][0].getVal()
+            dibbkg = True
+        except:
+            dibbkg = False
+
+        if allbkg == True and not dibbkg:
             norm1 = norms["nonRes"][0].getVal()+norms["Wjets"][0].getVal()+norms["Zjets"][0].getVal()+norms["TTJetsTNonResT"][0].getVal()+norms["TTJetsWNonResT"][0].getVal()+norms["TTJetsW"][0].getVal()+norms["TTJetsNonRes"][0].getVal()+norms["TTJetsResWResT"][0].getVal()+norms["TTJetsTop"][0].getVal()
             err_norm1 = math.sqrt(norms["nonRes"][1]*norms["nonRes"][1]+norms["Wjets"][1]*norms["Wjets"][1]+norms["Zjets"][1]*norms["Zjets"][1]+norms["TTJetsTNonResT"][1]*norms["TTJetsTNonResT"][1]+norms["TTJetsWNonResT"][1]*norms["TTJetsWNonResT"][1]+norms["TTJetsW"][1]*norms["TTJetsW"][1]+norms["TTJetsNonRes"][1]*norms["TTJetsNonRes"][1]+norms["TTJetsResWResT"][1]*norms["TTJetsResWResT"][1]+norms["TTJetsTop"][1]*norms["TTJetsTop"][1])
+        elif allbkg == True and dibbkg == True:
+            norm1 = norms["nonRes"][0].getVal()+norms["Wjets"][0].getVal()+norms["Zjets"][0].getVal()+norms["TTJetsTNonResT"][0].getVal()+norms["TTJetsWNonResT"][0].getVal()+norms["TTJetsW"][0].getVal()+norms["TTJetsNonRes"][0].getVal()+norms["TTJetsResWResT"][0].getVal()+norms["TTJetsTop"][0].getVal()+norms["WZ"][0].getVal()+norms["ZZ"][0].getVal()
+            err_norm1 = math.sqrt(norms["nonRes"][1]*norms["nonRes"][1]+norms["Wjets"][1]*norms["Wjets"][1]+norms["Zjets"][1]*norms["Zjets"][1]+norms["TTJetsTNonResT"][1]*norms["TTJetsTNonResT"][1]+norms["TTJetsWNonResT"][1]*norms["TTJetsWNonResT"][1]+norms["TTJetsW"][1]*norms["TTJetsW"][1]+norms["TTJetsNonRes"][1]*norms["TTJetsNonRes"][1]+norms["TTJetsResWResT"][1]*norms["TTJetsResWResT"][1]+norms["TTJetsTop"][1]*norms["TTJetsTop"][1]+norms["WZ"][1]*norms["WZ"][1]+norms["ZZ"][1]*norms["ZZ"][1])
+
         else:
             norm1 = norms["nonRes"][0].getVal()+norms["Wjets"][0].getVal()+norms["Zjets"][0].getVal()
             err_norm1 = math.sqrt(norms["nonRes"][1]*norms["nonRes"][1]+norms["Wjets"][1]*norms["Wjets"][1]+norms["Zjets"][1]*norms["Zjets"][1])

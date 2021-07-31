@@ -10,11 +10,7 @@ from tools import PostFitTools
 ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ROOT.gROOT.ProcessLine(".x tdrstyle.cc");
 
-#ROOT.gSystem.Load("Util_cxx.so")
-#from ROOT import draw_error_band
-
-#python runFitPlots_vjets_signal_bigcombo_splitRes.py -n workspace_combo_BulkGWW.root  -l comboHPHP -i /afs/cern.ch/user/j/jngadiub/public/2016/JJ_nonRes_HPHP.root -M 1200 -s
-#python runFitPlots_vjets_signal_bigcombo_splitRes.py -n workspace_combo_BulkGWW.root  -l comboHPLP -i /afs/cern.ch/user/j/jngadiub/public/2016/JJ_nonRes_HPLP.root -M 1200
+# NB running on ttbar only or plotting all ttbar components and DIB do not work together
 
 addTT = False 
 parser = optparse.OptionParser()
@@ -35,6 +31,7 @@ parser.add_option("--pdfx",dest="pdfx",help="name of pdfs lie PTXUp etc",default
 parser.add_option("--pdfy",dest="pdfy",help="name of pdfs lie PTYUp etc",default="")
 parser.add_option("-s","--signal",dest="fitSignal",action="store_true",help="do S+B fit",default=False)
 parser.add_option("-t","--addTop",dest="addTop",action="store_true",help="Fit top",default=False)
+parser.add_option("--addDIB",dest="addDIB",action="store_true",help="Fit DIB",default=False)
 parser.add_option("-M","--mass",dest="signalMass",type=float,help="signal mass",default=1560.)
 parser.add_option("--signalScaleF",dest="signalScaleF",type=float,help="scale factor to apply to signal when drawing so its still visible!",default=500.)
 parser.add_option("--prelim",dest="prelim",help="add preliminary label",default="Preliminary")
@@ -43,6 +40,9 @@ parser.add_option("--doFit",dest="fit",action="store_true",help="actually fit th
 parser.add_option("-v","--doVjets",dest="doVjets",action="store_true",help="Fit top",default=False)
 parser.add_option("--slopes",dest="slopes",action="store_true",help="save ttbar slopes",default=False)
 parser.add_option("--pseudo",dest="pseudo",action="store_true",help="write pseudodata in legend",default=False)
+parser.add_option("--both",dest="both",action="store_true",help="add projections with exchanged X and Y projections",default=False)
+parser.add_option("--plotbonly",dest="plotbonly",action="store_true",help="plot b only",default=False)
+
 (options,args) = parser.parse_args()
 ROOT.gStyle.SetOptStat(0)
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
@@ -69,6 +69,10 @@ if options.name.find("BulkGWW")!=-1:
     signalName="BulkGWW"
 if options.name.find("BulkGZZ")!=-1:
     signalName="BulkGZZ"
+if options.name.find("RadionZZ")!=-1:
+    signalName="RadionZZ"
+if options.name.find("RadionWW")!=-1:
+    signalName="RadionWW"
 if options.name.find("VBF_"+signalName)!=-1:
     signalName="VBF_"+signalName
 
@@ -153,18 +157,22 @@ if __name__=="__main__":
      model_b = workspace.pdf("model_b")
      if options.fitSignal: model = workspace.pdf("model_s")
      data_all = workspace.data("data_obs")
-     args  = model.getComponents()
+     args  = model_b.getComponents()
+     if options.fitSignal and options.plotbonly==False:
+         print "using s+b model"
+         args  = model.getComponents()
+     sig_args =  workspace.pdf("model_s").getComponents()
      data_all.Print()
      data = {}
      pdf1Name = {}
      all_expected = {}
      signal_expected= {}
      workspace.var("MJJ").setVal(2000)
-     bkgs = ["nonRes","Wjets","Zjets","TTJetsTop","TTJetsW","TTJetsNonRes","TTJetsWNonResT","TTJetsResWResT" ,"TTJetsTNonResT"]
+     bkgs = ["nonRes","Wjets","Zjets","TTJetsTop","TTJetsW","TTJetsNonRes","TTJetsWNonResT","TTJetsResWResT" ,"TTJetsTNonResT","WZ","ZZ"]
      #print number of events before the fit
      data[period] = (workspace.data("data_obs").reduce("CMS_channel==CMS_channel::JJ_"+purity+"_13TeV_"+period))
      pdf1Name [period] =  "pdf_binJJ_"+purity+"_13TeV_"+period+"_bonly"
-     if options.fitSignal: pdf1Name [period] =  "pdf_binJJ_"+purity+"_13TeV_"+period
+     if options.fitSignal and options.plotbonly==False: pdf1Name [period] =  "pdf_binJJ_"+purity+"_13TeV_"+period
      print "pdf1Name ",pdf1Name
      print
      print "Observed number of events in",purity,"category:"
@@ -175,6 +183,8 @@ if __name__=="__main__":
      for bkg in bkgs:
          if options.doVjets==False and (bkg=="Wjets" or bkg=="Zjets"): expected[bkg] = [None,None]; continue
          if options.addTop==False and (bkg.find("TTJets")!=-1): expected[bkg] = [None,None]; continue
+         if options.addDIB==False and (bkg.find("WZ")!=-1): expected[bkg] = [None,None]; continue
+         if options.addDIB==False and (bkg.find("ZZ")!=-1): expected[bkg] = [None,None]; continue
          expected[bkg] = [ (args[pdf1Name[period]].getComponents())["n_exp_binJJ_"+purity+"_13TeV_"+period+"_proc_"+bkg],0.]
          norms[bkg] = expected[bkg][0].getVal()
          print "Expected number of "+bkg+" events:",(expected[bkg][0].getVal()),"   ("+period+")"
@@ -183,8 +193,10 @@ if __name__=="__main__":
      jsonfile.close()
      all_expected[period] = expected
      if options.fitSignal:
-        print "Expected signal yields:",(args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName].getVal(),"(",period,")"
-        signal_expected[period] = [ (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName], 0.]
+        print " pdf1Name[period] ",pdf1Name[period], " replacing ",pdf1Name[period].replace("_bonly","")
+        print "Expected signal yields:",(sig_args[pdf1Name[period].replace("_bonly","")].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName].getVal(),"(",period,")"
+        signal_expected[period] = [ (sig_args[pdf1Name[period].replace("_bonly","")].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName], 0.]
+        fitted_r = workspace.var("r").getVal()
      else: signal_expected[period] = [0.,0.]
      print 
      
@@ -194,9 +206,15 @@ if __name__=="__main__":
      print
      
      if options.fit:
-        fitresult = model.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))  
-        #if options.label.find("sigonly")==-1:
-        #    fitresult_bkg_only = model_b.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))
+        if options.fitSignal == True and options.plotbonly == True:
+            #if options.label.find("sigonly")==-1:
+            print " ****************** doing b only fit **************"
+            fitresult = model_b.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))
+        else:
+            print " *********** doing s+b fit ***************"
+            fitresult = model.fitTo(data_all,ROOT.RooFit.SumW2Error(not(options.data)),ROOT.RooFit.Minos(0),ROOT.RooFit.Verbose(0),ROOT.RooFit.Save(1),ROOT.RooFit.NumCPU(8))
+
+
         #else: fitresult_bkg_only = fitresult
         print " FIT RESULT ",fitresult.Print() 
         print 
@@ -214,13 +232,16 @@ if __name__=="__main__":
      for bkg in bkgs:
          if options.doVjets==False and (bkg=="Wjets" or bkg=="Zjets"): continue
          if options.addTop==False and (bkg.find("TTJets")!=-1): continue
+         if options.addDIB==False and (bkg=="WZ" or bkg=="ZZ"): continue
          allpdfs[period].append(args["shapeBkg_"+bkg+"_JJ_"+purity+"_13TeV_"+period])
          print period, " shape ", bkg, " :"
          allpdfs[period][-1].Print()
          #allpdfs[period][-1].funcList().Print()
          #allpdfs[period][-1].coefList().Print()
-     if options.fitSignal:
+     if options.fitSignal and options.plotbonly == False:
             allsignalpdfs[period] = args["shapeSig_"+signalName+"_JJ_"+purity+"_13TeV_"+period]
+     elif options.fitSignal and options.plotbonly == True:
+            allsignalpdfs[period] = sig_args["shapeSig_"+signalName+"_JJ_"+purity+"_13TeV_"+period]
      else: allsignalpdfs[period] =None
         
         
@@ -237,18 +258,22 @@ if __name__=="__main__":
      allpdfsy = PostFitTools.definefinalPDFs(options,"y",allpdfs)
 
      if options.fit:
-        bkgLabel = ["nonRes","Wjets","Zjets","resT","resW","nonresT","resWnonresT","resTresW","resTnonresT"]
+        bkgLabel = ["nonRes","Wjets","Zjets","resT","resW","nonresT","resWnonresT","resTresW","resTnonresT","WZ","ZZ"]
         mappdf = {"resT":"TTJetsTop","resW":"TTJetsW","nonresT":"TTJetsNonRes","resTnonresT":"TTJetsTNonResT","resWnonresT":"TTJetsWNonResT","resTresW":"TTJetsResWResT"}
         expected = {}
         norms = {}
+        unc = {}
         slopes = {}
         norms["data"] = data[period].sumEntries()
+        unc["data"]= ROOT.TMath.Sqrt(data[period].sumEntries())
         for bkg,bn in zip(bkgs,bkgLabel):
                 if options.doVjets==False and (bkg=="Wjets" or bkg=="Zjets"): expected[bkg] = [0.,0.]; continue
                 if options.addTop==False and (bkg.find("TTJets")!=-1): expected[bkg] = [0.,0.]; continue
+                if options.addDIB==False and (bkg=="WZ" or bkg=="ZZ"): expected[bkg] = [0.,0.]; continue
                 #(args[pdf1Name[period]].getComponents())["n_exp_binJJ_"+purity+"_13TeV_"+period+"_proc_"+bkg].dump()
                 expected[bkg] = [ (args[pdf1Name[period]].getComponents())["n_exp_binJJ_"+purity+"_13TeV_"+period+"_proc_"+bkg],(args[pdf1Name[period]].getComponents())["n_exp_binJJ_"+purity+"_13TeV_"+period+"_proc_"+bkg].getPropagatedError(fitresult)]
-                norms[bn] = expected[bkg][0].getVal() 
+                norms[bn] = expected[bkg][0].getVal()
+                unc[bn]=expected[bkg][1]
                 if bn in mappdf:
                     #print "+mappdf[bn] ",mappdf[bn]
                     params = fitresult.floatParsFinal()
@@ -275,7 +300,10 @@ if __name__=="__main__":
         jsonfile = open(options.output+"/Observed_"+period+"_"+options.channel+".json","w")
         json.dump(norms,jsonfile)
         jsonfile.close()
-        if options.fitSignal:
+        jsonfile = open(options.output+"/Uncertainty_"+period+"_"+options.channel+".json","w")
+        json.dump(unc,jsonfile)
+        jsonfile.close()
+        if options.fitSignal and options.plotbonly == False:
                 signal_expected[period] = [ (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName], (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName].getPropagatedError(fitresult)]
                 fitted_r = workspace.var("r").getVal()
                 print "Fitted signal yields:",signal_expected[period][0].getVal()," +/- ", signal_expected[period][1] ,"(",period,")"
@@ -285,25 +313,67 @@ if __name__=="__main__":
      logfile = open(options.output+options.log,"a::ios::ate")
      forplotting = PostFitTools.Postfitplotter(parser,logfile,signalName)
      if options.fit:
-         forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind,fitresult)
-     else: forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind)
+          forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind,options.plotbonly,fitresult)
+          if options.both == True:
+              forprojInv = PostFitTools.Projection(hinMC,[options.yrange,options.xrange,options.zrange], workspace,options.fit,options.blind,options.plotbonly,fitresult)
+     else:
+         forproj = PostFitTools.Projection(hinMC,[options.xrange,options.yrange,options.zrange], workspace,options.fit,options.blind)
+         if options.both == True:
+             forprojInv = PostFitTools.Projection(hinMC,[options.yrange,options.xrange,options.zrange], workspace,options.fit,options.blind)
+
      #make projections onto MJJ axis 
      if options.projection =="z" or options.projection =="xyz":
          results = []
-         res = forproj.doProjection(data[period],allpdfsz[period],all_expected[period],"z",allsignalpdfs[period],signal_expected[period],showallTT)
-         if options.fitSignal: workspace.var("r").setVal(fitted_r)
-         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo)
+         res = forproj.doProjection(data[period],allpdfsz[period],all_expected[period],"z",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+         if options.both == True:
+             resInv = forprojInv.doProjection(data[period],allpdfsz[period],all_expected[period],"z",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+             for i in range(len(res[0])):
+                 res[0][i].Sumw2()
+                 resInv[0][i].Sumw2()
+                 res[0][i].Add(resInv[0][i])
+             res[1].Sumw2()
+             resInv[1].Sumw2()
+             res[1].Add(resInv[1])
+             res[2].Sumw2()
+             resInv[2].Sumw2()
+             res[2].Add(resInv[2])
+             if options.fit:
+                 #adding error band. The middle point in added while the uncertainty is averaged
+                 N =  res[7][0].GetN()
+                 for i in range(N):
+                     X = ROOT.Double()
+                     Y = ROOT.Double()
+                     res[7][0].GetPoint(i,X,Y)
+                     XI = ROOT.Double()
+                     YI = ROOT.Double()
+                     resInv[7][0].GetPoint(i,XI,YI)
+                     res[7][0].SetPoint(i,X,Y+YI)
+                     Y = res[7][0].GetErrorYhigh(i)
+                     X = res[7][0].GetErrorXhigh(i)
+                     YI = resInv[7][0].GetErrorYhigh(i)
+                     XI = resInv[7][0].GetErrorXhigh(i)
+                     res[7][0].SetPointEYhigh(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXhigh(i,X)
+                     Y = res[7][0].GetErrorYlow(i)
+                     X = res[7][0].GetErrorXlow(i)
+                     YI = resInv[7][0].GetErrorYlow(i)
+                     XI = resInv[7][0].GetErrorXlow(i)
+                     res[7][0].SetPointEYlow(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXlow(i,X)
+
+         if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
+         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both)
      #make projections onto MJ1 axis
      if options.projection =="x" or options.projection =="xyz":
          results = []
-         res = forproj.doProjection(data[period],allpdfsx[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT)
-         if options.fitSignal: workspace.var("r").setVal(fitted_r)
+         res = forproj.doProjection(data[period],allpdfsx[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+         if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
      #make projections onto MJ2 axis
      if options.projection =="y" or options.projection =="xyz":
          results = []
-         res = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT)
-         if options.fitSignal: workspace.var("r").setVal(fitted_r)
+         res = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+         if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
 
 
