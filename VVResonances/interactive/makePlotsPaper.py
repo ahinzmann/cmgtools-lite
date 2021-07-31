@@ -11,20 +11,29 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ROOT.gROOT.ProcessLine(".x tdrstyle.cc");
 
 
-#python makePlotsPaper.py -i postfit_data_SR_BulkGWW_afterpreapproval_Run2 -p "z" -n "PullsPaper" -I postfit_data_SR_ZprimeZHinc_afterpreapproval_Run2
+#python makePlotsPaper.py -i DIR_WITH_BG_POSTFITS -p "z" -n "PullsPaper" 
+# for the dir names where signal prefits should be stored look below, or change accordingly
 
-# NB: For now only 2 signals (+VBF counterpart) implemented.
-# NB: Before running this plotting script, one should run and store in different directories both prefit (needed for signal) and posftis!
+# NB: Before running this plotting script, one should run and store in different directories both prefit with signal (needed for signal) and posfits bg only!
+# first plot:
+# run b only on 65-105 for both jets - only ggF/DY categories
+# for signal use: makeDataPreFitsBGZZ.sh & run for BGWW also!
+# second plot:
+# run b only fit on 65-105 & 110-140 with the option (--both)  of adding distributions: makeDataFitsVorH.sh 
+# and for signal prefit use makeDataFitsVorHsignal.sh (two options inside)
+# third plot:
+# run on VBF categories only, use makeDataFitsVH.sh for b only fit 
+# and makeDataFitsVHsignal.sh for signals prefit
 
 parser = optparse.OptionParser()
 parser.add_option("-o","--output",dest="output",help="Output folder name",default='')
-parser.add_option("-n","--name",dest="name",help="ouptut name",default='PostfitPaper')
-parser.add_option("-i","--input",dest="input",help="Input directory",default='postfit_data_blindSR__Run2/')
+parser.add_option("-n","--name",dest="name",help="ouptut name",default='PullsPaper')
+parser.add_option("-i","--input",dest="input",help="Input directory",default='postfits_Zprojections_paper/')
 parser.add_option("-I","--secondinput",dest="secondinput",help="Input directory of the second file",default='postfit_data_blindSR__Run2/')
 parser.add_option("-x","--xrange",dest="xrange",help="set range for x bins in projection",default="0,-1")
 parser.add_option("-y","--yrange",dest="yrange",help="set range for y bins in projection",default="0,-1")
 parser.add_option("-z","--zrange",dest="zrange",help="set range for z bins in projection",default="0,-1")
-parser.add_option("-p","--projection",dest="projection",help="choose which projection should be done",default="xyz")
+parser.add_option("-p","--projection",dest="projection",help="choose which projection should be done",default="z")
 parser.add_option("-d","--data",dest="data",action="store_true",help="make also postfit plots",default=True)
 parser.add_option("-l","--label",dest="label",help="add extra label such as pythia or herwig",default="")
 parser.add_option("--log",dest="log",help="write fit result to log file",default="fit_results.log")
@@ -218,9 +227,7 @@ def fromGeVtoTeV(hist,scale=1000.):
     xbins = []
     xbins = xaxis.GetXbins()
     for i in range(xbins.GetSize()):
-        print " before ",xbins[i]
         xbins[i] = xbins[i]/scale
-        print "after ",xbins[i]
     xaxis.Set((xbins.GetSize() - 1), xbins.GetArray())
     return hist
 
@@ -232,11 +239,7 @@ def fromGeVtoTeVGraph(graph,scale=1000.):
         X = ROOT.Double()
         Y = ROOT.Double()
         graph.GetPoint(i,X,Y)
-        print " X ",X
-        print " X/1000. ",X/scale
         syst_band_scaled.SetPoint(i,X/scale,0)
-
-
         Y = graph.GetErrorYhigh(i)
         X = graph.GetErrorXhigh(i)
         syst_band_scaled.SetPointEYhigh(i,Y)
@@ -250,21 +253,19 @@ def fromGeVtoTeVGraph(graph,scale=1000.):
     return syst_band_scaled
 
 
-
-
-
-
-
-
 def MakeSignalPulls(S,data,scaling=1.):
     final = ROOT.TH1F()
     S.Copy(final)
     for i in range(1,S.GetNbinsX()+1):
-        if data.GetBinContent(i) == 0: continue
+        lastbin =1.
+        if data.GetBinContent(i) != 0:
+            lastbin=data.GetBinContent(i)
         s = S.GetBinContent(i)
-        err_data = ROOT.TMath.Sqrt(data.GetBinContent(i))
+        err_data = ROOT.TMath.Sqrt(lastbin)
         pull = s / err_data
         final.SetBinContent(i,pull*scaling)
+        #final.SetBinContent(i,s*scaling)
+
     return final
 
 def Plot(categories,histos,axis,signal1=None,signal2=None):
@@ -532,7 +533,7 @@ def SetupLegend(signal,mass,scaling):
     if "ZprimeZH"  in signal:
         titleY =VBFtype+"Z' (%i TeV) #rightarrow ZH (#times %i)"%(mass/1000.,scaling)
     if "WprimeWH"  in signal:
-        titleY =VBFtype+"W' (%i TeV) #rightarrow WH (#times %i)"%(mass/1000.,scaling)
+        titleY =VBFtype+"W' (%i TeV) #rightarrow WH (#times %.1f)"%(mass/1000.,scaling)
     return titleY
 
 
@@ -545,11 +546,11 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
     xtitle = ''
     ymin = 0
     ymax = 0
-    xrange = options.xrange
-    yrange = options.yrange
+    xrange = Xrange
+    yrange = Yrange
     zrange = options.zrange
-    if options.xrange == '0,-1': xrange = '55,215'
-    if options.yrange == '0,-1': yrange = '55,215'
+    if Xrange == '0,-1': xrange = '55,215'
+    if Yrange == '0,-1': yrange = '55,215'
     if options.zrange == '0,-1': zrange = '1.246,7.600'
     xlow = xrange.split(',')[0]
     xhigh = xrange.split(',')[1]
@@ -565,12 +566,17 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
 
     if axis=='z':
         print "make Z projection"
-        htitle = "Z-Proj. x : "+options.xrange+" y : "+options.yrange
+        htitle = "Z-Proj. x : "+xrange+" y : "+yrange
         hhtitle = options.channel
         xtitle = "Dijet invariant mass [TeV]"
-        ymin = -3
-        ymax = 3
-        extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
+        ymin = -4
+        ymax = 4
+        extra1 = xrange.split(',')[0]+' GeV < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
+        extra2 = yrange.split(',')[0]+' GeV < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+        if xrange != yrange:
+            extra1 = xrange.split(',')[0]+' GeV < m_{jet1/2} < '+ xrange.split(',')[1]+' GeV'
+            extra2 = yrange.split(',')[0]+' GeV < m_{jet2/1} < '+ yrange.split(',')[1]+' GeV'
+
         if options.blind == True and len(xrange.split(',')) == 4:
             extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'        #xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
             extra2 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
@@ -604,18 +610,20 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
 
     # Lots of math to have all pulls with the same height of the y-axis, taking into account that the last pad will need be larger to accomodate x-axis labels & title
     cat_usual = len(categories)-1.
-    ymin_pad0 = 0.81 #total lenght of the pull parts = cat_usual*usualstep + laststep
+    ymin_pad0 = 0.85 #total lenght of the pull parts = cat_usual*usualstep + laststep
     bottom_margin = 0.35
     usualstep = ymin_pad0*(1.-bottom_margin)/(cat_usual-cat_usual*bottom_margin+1.)
     # laststep = usualstep+ bottom_margin*laststep
     laststep = usualstep/(1.-bottom_margin)
-    leg = ROOT.TLegend(0.38,ymin_pad0+0.11,0.99,0.99)
-    leg.SetTextSize(0.038)
-    leg.SetNColumns(2)
+    #leg = ROOT.TLegend(0.38,ymin_pad0+0.11,0.99,0.99)
+    leg = ROOT.TLegend(0.18,ymin_pad0+0.01,0.45,0.99)
+    leg.SetTextSize(0.033)
+    #leg.SetNColumns(2)
     leg.SetMargin(0.12)
     leg.SetColumnSeparation(0.05)
-    legsig = ROOT.TLegend(0.38,ymin_pad0+0.001,0.6,ymin_pad0+0.10)
-    legsig.SetTextSize(0.038)
+    #legsig = ROOT.TLegend(0.48,ymin_pad0+0.001,0.8,ymin_pad0+0.10)
+    legsig = ROOT.TLegend(0.45,ymin_pad0+0.05,0.97,0.99)
+    legsig.SetTextSize(0.033)
 
     pad0 =  get_pad("legend",ymin_pad0,1.)
     pad0.SetLeftMargin(0.01)
@@ -664,7 +672,8 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
     histos[categories[0]]["pulls_stat"].SetLineStyle(1)
 
     leg.AddEntry(histos[categories[0]]["syst_band"],"\pm \sigma_{syst}/\sigma_{stat}","f")
-    leg.AddEntry(histos[categories[0]]["pulls_stat"],"(Data-Prediction)/\sigma_{stat}","ep")
+    leg.AddEntry(histos[categories[0]]["pulls_stat"],"#frac{(Data-Prediction)}{\sigma_{stat}}","ep")
+    #leg.AddEntry(histos[categories[0]]["pulls_stat"],"(Data-Prediction)/\sigma_{stat}","ep")
     leg.SetLineColor(0)
     legsig.SetLineColor(0)
 
@@ -673,19 +682,22 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
     line = {}
     h_signal1 = {}
     h_signal2 = {}
+    box={}
     for cat in categories:
             print  "cat ",cat
             print " leg ",ymin_pad0-step*(i+1)+0.05, ymin_pad0-step*(i)-0.05
             leg2[cat] = ROOT.TLegend(0.6,0.05,0.88,0.13)
-            leg2[cat].SetTextSize(0.3)
+            leg2[cat].SetTextSize(0.25)
 
             pads[cat].cd()
 
+
             histos[cat]["syst_band"].GetXaxis().SetRangeUser(1.246,7.600)
             #histos[cat]["syst_band"].GetXaxis().SetLimits(1.246,7.600)
-            histos[cat]["syst_band"].GetYaxis().SetNdivisions(3)
             histos[cat]["syst_band"].SetMinimum(ymin)
             histos[cat]["syst_band"].SetMaximum(ymax)
+            histos[cat]["syst_band"].GetYaxis().SetNdivisions(4)
+
             histos[cat]["syst_band"].SetTitle(hhtitle)
             #histos[cat][sample].SetLineColor(colors[cat])
             #histos[cat][sample].SetMarkerColor(colors[cat])
@@ -705,6 +717,41 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
             histos[cat]["syst_band"].Draw("a2same")
             histos[cat]["pulls_stat"].SetMarkerSize(0.7)
             histos[cat]["pulls_stat"].Draw('sameEP0')
+
+            if "VH_HPHP" in cat:
+                pt3 = ROOT.TPaveText(0.55,0.65,0.9,0.8,"NDC")
+                pt3.SetTextFont(43)
+                pt3.SetTextSize(20)
+                pt3.SetTextAlign(12)
+                pt3.SetFillColor(0)
+                pt3.SetBorderSize(0)
+                pt3.SetFillStyle(0)
+                pt3.AddText(extra1)
+                print " extra1 ",extra1
+                #pt3.AddText(extra2)
+                pt3.Draw()
+                pt32 = ROOT.TPaveText(0.55,0.05,0.9,0.45,"NDC")
+                pt32.SetTextFont(43)
+                pt32.SetTextSize(20)
+                pt32.SetTextAlign(12)
+                pt32.SetFillColor(0)
+                pt32.SetBorderSize(0)
+                pt32.SetFillStyle(0)
+                #pt32.AddText(extra1)
+                print " extra2 ",extra2
+                pt32.AddText(extra2)
+                pt32.Draw()
+
+
+
+            # boxes are needed to cover the +/- 4 extreme on the y axis that are overlapping in an ugly way and make it crowded
+            box[cat] = ROOT.TBox(1.,3.,1.23,4.8)
+            box[cat].SetFillColor(0)
+            box[cat].Draw("same")
+
+            boxlow = ROOT.TBox(1.,-3.,1.23,-4.8)
+            boxlow.SetFillColor(0)
+            boxlow.Draw("same")
 
             histos[cat]["syst_band"].GetXaxis().SetTitle(xtitle)
             histos[cat]["syst_band"].GetYaxis().SetTitleOffset(1.5)
@@ -759,7 +806,7 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
     #errors[0].Draw("E2same")
     print "projection "+extra1+"  "+extra2+" \n"
 
-
+    '''
     pt3 = ROOT.TPaveText(0.18,0.55,0.39,0.68,"NDC")
     pt3.SetTextFont(42)
     pt3.SetTextSize(0.04)
@@ -767,27 +814,30 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1,s
     pt3.SetFillColor(0)
     pt3.SetBorderSize(0)
     pt3.SetFillStyle(0)
-    #pt3.AddText(extra1)
-    #pt3.AddText(extra2)
-    #pt3.Draw()
-
+    pt3.AddText(extra1)
+    pt3.AddText(extra2)
+    pt3.Draw("same")
+    '''
     #CMS_lumi.CMS_lumi(c, 4, 10)
+    c.Update()
+    c.Modified()
+    c.Update()
+    c.cd()
+
     CMS_lumi.relPosX = 0.13
     c.SetLeftMargin(0.01)
     c.SetRightMargin(0.01)
     lumiSpecialX = -1.
     lumiSpecialY = -1.
-    CMS_lumi.CMS_lumi(c, 4,0,lumiSpecialX,lumiSpecialY)
-    
+    CMS_lumi.CMS_lumi(c, 4,15,lumiSpecialX,lumiSpecialY)
+    CMS_lumi.lumiTextSize=0.45
+    CMS_lumi.lumiTextOffset=0.5
+    CMS_lumi.cmsTextSize=0.6
 
-    c.Update()
-    c.Modified()
-    c.Update()
-    c.cd()
-    extralabel = ROOT.TText(.06,ymin_pad0+0.04,"Pulls");
+    extralabel = ROOT.TText(.06,ymin_pad0+0.03,"Pulls");
     extralabel.SetTextAlign(22);
     extralabel.SetTextFont(43);
-    extralabel.SetTextSize(25);
+    extralabel.SetTextSize(20);
     #extralabel.SetTextAngle(90);
     extralabel.Draw("same");
 
@@ -842,34 +892,22 @@ if __name__ == '__main__':
             print "Error:  unknown proj ",p
             sys.exit()
 
-        '''
-        # plots of mjj for different categories
-        histnames=["Data","BackgroundFit"]
-        hists={}
-        for c in categories_all:
-            hists[c]={}
-            print " getting hists for category ",c
-
-            filename=options.input+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
-            r_file = ROOT.TFile.Open(filename,"READ")
-            print " filename ",filename
-            for histname in histnames:
-                print 
-                hists[c][histname]= GetHist(r_file,histname)
-                print " hists[c][histname] ",hists[c][histname]
-
-            r_file.Close()
-        Plot(categories_VV,hists,p)                
-        Plot(categories_VH,hists,p)
-        '''
 
         data = "Data" #"Simulation"
-        # non VBF signal and categories
+
+
+
+        # First plot: VV mass window, non VBF signal and categories
         signal1 = "BulkGWW"
         prescaling1 = 10.
-        signal2 = "ZprimeZHinc"
-        prescaling2 = 1.
+        mass1=2000
+        signal2 = "BulkGZZ"
+        prescaling2 = 10.
+        mass2=3000
         pullsnames=[signal1,signal2,"pulls_stat","syst_band",data]
+        Xrange="65,105"
+        Yrange="65,105"
+        htitle = "Z-Proj. x : "+Xrange+" y : "+Yrange
 
         pulls={}
         for c in categories_ggDY:
@@ -880,10 +918,10 @@ if __name__ == '__main__':
             filename=options.input+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file = ROOT.TFile.Open(filename,"READ")
 
-            filename1=options.input.replace("postfit","prefit")+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename1="prefit_data_SR_VV_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file1 = ROOT.TFile.Open(filename1,"READ")
 
-            filename2=options.secondinput.replace("ZprimeZHinc",signal2).replace("postfit","prefit")+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename2="prefit_data_SR_VV_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file2 = ROOT.TFile.Open(filename2,"READ")
 
             print " filename ",filename
@@ -904,16 +942,78 @@ if __name__ == '__main__':
 
     
         scaling1 = 10.
-        scaling2 = 2.
-        PlotPulls(categories_ggDY,pulls,p,data,signal1,signal2,scaling1,scaling2,2000,3000)
+        scaling2 = 100.
+        PlotPulls(categories_ggDY,pulls,p,data,signal1,signal2,scaling1,scaling2,mass1,mass2)
+
+
+        print "><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"
+
+        # second plot: VH + HV mass window, non VBF signal and categories
+        signal1 = "WprimeWHinc"
+        prescaling1 = 1.
+        mass1=2000
+        signal2 = "ZprimeZHinc"
+        prescaling2 = 1.
+        mass2=3000
+        pullsnames=[signal1,signal2,"pulls_stat","syst_band",data]
+
+        print " Get VH "
+        Xrange="65,105"
+        Yrange="110,140"
+        htitle = "Z-Proj. x : "+Xrange+" y : "+Yrange
+
+        pulls={}
+        for c in categories_ggDY:
+        #for c in categories_test:
+            pulls[c]={}
+            print " getting hists for category ",c
+
+            filename=options.input+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            r_file = ROOT.TFile.Open(filename,"READ")
+
+            filename1="prefit_data_SR_VorH_together_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            r_file1 = ROOT.TFile.Open(filename1,"READ")
+
+            filename2="prefit_data_SR_VorH_together_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            r_file2 = ROOT.TFile.Open(filename2,"READ")
+
+            print " filename ",filename
+            for histname in pullsnames:
+                file_to_use = r_file
+                if histname == signal1: file_to_use = r_file1
+                if histname == signal2: file_to_use = r_file2
+                print
+                pulls[c][histname]= GetHist(file_to_use,histname)
+                print " pulls[c][histname] ",pulls[c][histname]
+                if histname == signal1:
+                    pulls[c][signal1] = PrepareSignal(pulls[c][signal1],prescaling1)
+                if histname == signal2:
+                    pulls[c][signal2] = PrepareSignal(pulls[c][signal2],prescaling2)
+
+            r_file.Close()
+        #PlotPulls(categories_test,pulls,p,signal1) 
+
+
+
+        scaling1 = 0.2
+        scaling2 = 1.
+        PlotPulls(categories_ggDY,pulls,p,data,signal1,signal2,scaling1,scaling2,mass1,mass2)
+
+
+        print "><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"
 
         
         # VBF signal and categories
         signal1 = "VBF_RadionZZ"
         prescaling1 = 10.
+        mass1=2000
         signal2 = "VBF_WprimeWZ"
-        prescaling2 = 10.
+        prescaling2 = 10000.
+        mass2=1500
         pullsnames=[signal1,signal2,"pulls_stat","syst_band",data]
+        Xrange="65,140"
+        Yrange="65,140"
+        htitle = "Z-Proj. x : "+Xrange+" y : "+Yrange
 
         pulls={}
         for c in categories_VBF:
@@ -924,10 +1024,10 @@ if __name__ == '__main__':
             filename=options.input.replace("BulkGWW",signal1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file = ROOT.TFile.Open(filename,"READ")
 
-            filename1=options.input.replace("postfit","prefit").replace("BulkGWW",signal1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename1="prefit_data_SR_VplusH_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file1 = ROOT.TFile.Open(filename1,"READ")
 
-            filename2=options.secondinput.replace("postfit","prefit").replace("ZprimeZHinc",signal2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename2="prefit_data_SR_VplusH_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file2 = ROOT.TFile.Open(filename2,"READ")
 
             print " filename ",filename
@@ -946,6 +1046,6 @@ if __name__ == '__main__':
 
             r_file.Close()
         scaling1 = 300.
-        scaling2 = 30000.
-        PlotPulls(categories_VBF,pulls,p,data,signal1,signal2,scaling1,scaling2,2000,3000)
+        scaling2 = 300.
+        PlotPulls(categories_VBF,pulls,p,data,signal1,signal2,scaling1,scaling2,mass1,mass2)
 
