@@ -26,7 +26,7 @@ parser.add_option("-T","--titleY",dest="titleY",default='#sigma x #bf{#it{#Beta}
 parser.add_option("-n","--name",dest="name",default='test',help="add a label to the output file name")
 parser.add_option("--spline",dest="spline",action='store_true',default=False)
 parser.add_option("-p","--period",dest="period",default='2016',help="period")
-parser.add_option("-f","--final",dest="final",type=int, default=1,help="Preliminary or not")
+parser.add_option("-f","--final",dest="final",type=int, default=0,help="Preliminary or not")
 parser.add_option("--hvt","--hvt",dest="hvt",type=int, default=0,help="do HVT (1) or do BulkG (2), (0) for single signal")
 parser.add_option("--HVTworkspace","--HVTworkspace",dest="HVTworkspace",default="workspace_JJ_VprimeWV_13TeV.root",help="HVT workspace with spline interpolation")
 parser.add_option("--debug",dest="debug",action='store_true',default=False)
@@ -787,7 +787,6 @@ gtheory.Draw("Lsame")
 if options.theoryUnc: gtheorySHADE.Draw("Fsame")
 
 c.SetLogy(options.log)
-c.Draw()
 
 if options.debug: print " I have c "
 
@@ -829,14 +828,16 @@ if options.debug: print " now you have the band legend"
 if not options.blind: leg2.AddEntry(bandObs, " ", "")
 leg2.AddEntry(mean, " ", "L")
 leg2.AddEntry(mean, " ", "L")
-leg2.AddEntry(gtheory, " ", "")
+leg2.AddEntry(gtheorySHADE, " ", "F")
       
 if options.debug: print " now you have the legend "
 
-if options.final:
-    cmslabel_final(c,options.period,11)
+if options.final==1:
+ cmslabel_final(c,options.period,11)
+elif options.final==2:
+ cmslabel_empty(c,options.period,10)
 else:
-    cmslabel_prelim(c,options.period,11)
+ cmslabel_prelim(c,options.period,11)
 leg.Draw()
 leg2.Draw()
 #leg3.Draw()
@@ -851,13 +852,14 @@ c.SaveAs(filename+".pdf")
 c.SaveAs(filename+".C")    
 
 startmass = 1.3
-outf = open('log_%s.txt'%filename,'a')
+outf = open('log_%s.txt'%filename,'w')
 i=startmass
 while i < 6.:
  i+=0.01 
  y_exp = mean.Eval(i)
- if y_exp > gtheory.Eval(i) and i > mean.Eval(startmass) < gtheory.Eval(startmass) :
-   outf.write("Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+"\n")
+ if y_exp > gtheory.Eval(i) and mean.Eval(startmass) < gtheory.Eval(startmass) :
+   outf.write("Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+", theory is "+str(gtheory.Eval(i))+"\n")
+   print "Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+", theory is "+str(gtheory.Eval(i))
    break
 
 if options.blind==0:
@@ -868,7 +870,8 @@ if options.blind==0:
   i+=0.01 
   y_obs = bandObs.Eval(i)
   if y_obs > gtheory.Eval(i) and bandObs.Eval(startmass)< gtheory.Eval(startmass):
-   outf.write("Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+"\n")
+   outf.write("Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+", theory is "+str(gtheory.Eval(i))+"\n")
+   print "Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+", theory is "+str(gtheory.Eval(i))
    exclMass = i
    break
 
