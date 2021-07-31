@@ -30,8 +30,10 @@ parser.add_option("--minMVV","--minMVV",dest="minMVV",type=float,help="mVV varia
 parser.add_option("--maxMVV","--maxMVV",dest="maxMVV",type=float, help="mVV variable",default=1)
 parser.add_option("--binsMVV",dest="binsMVV",help="use special binning",default="")
 parser.add_option("-t","--triggerweight",dest="triggerW",action="store_true",help="Use trigger weights",default=False)
+parser.add_option("--prelim",dest="prelim",help="which CMS labels?",default='prelim')
 (options,args) = parser.parse_args()
 
+print " prelim? ",options.prelim
 
 debug_out = "debug_TT/"
 if not os.path.exists(debug_out): 
@@ -210,6 +212,7 @@ def doClosure(histos,xaxis,jsonfile,category):
       
       fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Save(1)]) #55,140 works well with fitting only the resonant part 
       fitter.projection_ratioplot("model","data","MJ","debug_TT/%s_closure_%s_binL%s_binH%s.pdf"%(options.output,xax.replace("{","").replace("}",""),mjjbinL,mjjbinH),0,False,"%s (GeV)"%xax,category,55,215)
+      fitter.projection_ratioplot("model","data","MJ","debug_TT/%s_closure_%s_binL%s_binH%s.C"%(options.output,xax.replace("{","").replace("}",""),mjjbinL,mjjbinH),0,False,"%s (GeV)"%xax,category,55,215)
     
 def getMean(h2,binL,binH):
   nbins = h2.GetYaxis().GetNbins()
@@ -345,7 +348,8 @@ def doFit(th1_projY,mjj_mean,mjj_error,N,category):
     #fitter.w.var("sigmaN").setMin(15.)
 
     fitter.w.var("f_g1")  .setMin(0.05)
-    fitter.w.var("f_res") .setMin(0.4) #following Thea's suggestion to set the minimum to a higher value to make the fit converge #0.55 for VH HPLP
+    #fitter.w.var("f_res") .setMin(0.55) #following Thea's suggestion to set the minimum to a higher value to make the fit converge #0.55 for VH HPLP
+    fitter.w.var("f_res") .setMin(0.4) #this is a good valueeee!!!!
     # parametrise W with Gaussian
     fitter.w.var("meanW") .setMin(75.)
     fitter.w.var("sigmaW").setMin(5)
@@ -404,6 +408,7 @@ def doFit(th1_projY,mjj_mean,mjj_error,N,category):
     fitter.importBinnedData(projY,['x'],'data_full')
     fitter.fit('model','data_full',[ROOT.RooFit.SumW2Error(False),ROOT.RooFit.Save(1),ROOT.RooFit.Range(options.mini,options.maxi),ROOT.RooFit.Minimizer('Minuit2','migrad'), ROOT.RooFit.Extended(True)],requireConvergence=False) #55,140 works well with fitting only the resonant part
     fitter.projection_ratioplot("model","data_full","x","%s/%s_fullMjjSpectra.pdf"%(debug_out,options.output),0,False,"m_{jet} (GeV)",category)
+    fitter.projection_ratioplot("model","data_full","x","%s/%s_fullMjjSpectra.C"%(debug_out,options.output),0,False,"m_{jet} (GeV)",category)
     string = '{'
     for var,graph in graphs.iteritems():
         value,error=fitter.fetch(var)
@@ -432,6 +437,7 @@ def doFit(th1_projY,mjj_mean,mjj_error,N,category):
   fitter.importBinnedData(th1_projY,['x'],'data')
   fitter.fit('model','data',[ROOT.RooFit.SumW2Error(False),ROOT.RooFit.Save(1),ROOT.RooFit.Range(options.mini,options.maxi),ROOT.RooFit.Minimizer('Minuit2','migrad'), ROOT.RooFit.Extended(True)],requireConvergence=False) #Set SumW2 false for cov matrix to converge, see https://root-forum.cern.ch/t/covqual-with-sumw2error/17662/6
   fitter.projection_ratioplot("model","data","x","%s/%s_%s.pdf"%(debug_out,options.output,th1_projY.GetName()),0,False,"m_{jet} (GeV)",category,options.mini,options.maxi)
+  fitter.projection_ratioplot("model","data","x","%s/%s_%s.C"%(debug_out,options.output,th1_projY.GetName()),0,False,"m_{jet} (GeV)",category,options.mini,options.maxi)
   
   for var,graph in graphs.iteritems():
       value,error=fitter.fetch(var)
@@ -564,6 +570,7 @@ def doParametrizations(graphs,ff,category):
     addInfo.Draw()
 
     c.SaveAs(debug_out+options.output+"_"+var+".pdf")
+    c.SaveAs(debug_out+options.output+"_"+var+".C")
 
     fittedPars = ( [ func.GetParameter(i) for i in range(func.GetNpar()) ])
     st='(0+({}+{}*pow(MJJ,-{})))'.format(*fittedPars)
@@ -630,6 +637,7 @@ if __name__ == "__main__":
   colors = ["#CD3700","#EE4000","#FF4500","#CD4F39","#EE5C42","#EE6A50","#FF7256","#FA8072","#FFA07A","#EEB4B4"]*3
   jsonfile_ = options.output+".json"
   drawFromJson(jsonfile_, category,debug_out+options.output+"_draw_from_json.pdf")
+  drawFromJson(jsonfile_, category,debug_out+options.output+"_draw_from_json.C")
   doClosure([h2D_l1,h2D_l2],['m_{jet1}','m_{jet2}'],jsonfile_, category)
   
   
