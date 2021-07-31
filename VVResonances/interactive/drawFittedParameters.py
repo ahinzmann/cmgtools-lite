@@ -189,7 +189,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
   Mass = {}
 
   ct = getCanvas()
-  legt = getLegend()
+  legt = getLegend(0.5,0.55,0.9522613,0.9020979)
   ptt = getPavetext()
   ct.Draw()
   i=0
@@ -231,6 +231,12 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
 
 
   legt.Draw("same")
+  if prelim.find("prelim")!=-1:
+      cmslabel_sim_prelim(ct,'sim',11)
+  elif prelim.find("thesis")!=-1:
+      cmslabel_thesis(ct,'sim',11)
+  else:
+      cmslabel_sim(ct,'sim',11)
  
   name = path+"signalEff%s_TotalVVVH_%s"  %(vbfsig,prelim)
   ct.SaveAs(name+".png")
@@ -240,7 +246,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
 
   tot_ggDY = {}
   ct = getCanvas()
-  legt = getLegend(0.4,0.6363636,0.9522613,0.9020979)
+  legt = getLegend(0.35,0.55,0.9522613,0.9020979)
   ptt = getPavetext()
   ct.Draw()
   i=0
@@ -1087,7 +1093,7 @@ def compSignalMVV():
   
         
 if __name__ == '__main__':
-  prelim = ""
+  prelim = "prelim"
   signals = ["ZprimeWW","BulkGWW","WprimeWZ","BulkGZZ","ZprimeZHinc","WprimeWHinc","RadionWW","RadionZZ"]
   titles =  ["Z' #rightarrow WW","G_{B}#rightarrow WW","W' #rightarrow WZ","G_{B}#rightarrow ZZ","Z' #rightarrow ZH","W' #rightarrow WH","R #rightarrow WW","R #rightarrow ZZ"]
   categories = ["Run2_NP"]
