@@ -85,8 +85,36 @@ for string in graphStr:
     c = ROOT.TCanvas()
     c.SetRightMargin(0.2)
     if comps[0].find("corr")!=-1:
-        graph.GetXaxis().SetTitle("jet-1 mass [GeV]")
-        graph.GetYaxis().SetTitle("jet-2 mass [GeV]")
+        signal="W' #rightarrow "
+        decay = "WH "
+        if  options.output.find("Zprime")!=-1: 
+            signal="Z' #rightarrow "
+            decay="ZH "
+        if  options.output.find("WZ")!=-1: decay="WZ "
+        if options.output.find("VBF")!=-1: 
+            signal = " VBF "+signal
+        else: 
+            signal = "     "+signal
+        signal = signal+decay
+        graph.SetTitle("Simulation        "+signal+"           (13 TeV)")
+        variable = "mean"
+        graph.GetZaxis().SetTitle("#frac{mean_{bin}}{mean_{inclusive}}")
+        graph.SetMinimum(0.94)
+        graph.SetMaximum(1.04)
+
+        if comps[0].find("sigma")!=-1: 
+            variable = "sigma"
+            graph.GetZaxis().SetTitle("#frac{sigma_{bin}}{sigma_{inclusive}}")
+            graph.SetMinimum(0.95)
+            graph.SetMaximum(1.07)
+            if options.output.find("VBF")!=-1: 
+                graph.SetMaximum(1.7) 
+                graph.SetMinimum(0.9)
+    
+        graph.GetXaxis().SetTitle("m_{jet1} [GeV]")
+        graph.GetYaxis().SetTitle("m_{jet2} [GeV]")
+        graph.GetZaxis().SetTitleOffset(1.5)
+
         graph.Draw("COLZ")
     else:
         graph.Draw()
