@@ -168,6 +168,10 @@ for folder in folders:
     
         mass = float(fname.split('_')[-1])
         if mass < options.minMX or mass > options.maxMX: continue
+
+        # the 2500.0 mass point of the VBF_BulkGravToZZ signal in one of the three year has only a small number of events. It was used in the analysis but here it was tested the effect of removing it.
+        #if mass == 2500.0 and fname.find("VBF_BulkGravToZZ") !=-1:
+        #    continue
         
 
         samples[folder].update({mass : folder+fname})
