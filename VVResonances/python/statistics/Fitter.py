@@ -624,7 +624,7 @@ class Fitter(object):
         self.w.factory("MEAN[%.1f,%.1f,%.1f]"%(mass,0.8*mass,1.2*mass))
         #self.w.factory("SIGMA[1,5000]")
         self.w.factory("SIGMA[%.1f,%.1f,%.1f]"%(mass*0.05,mass*0.02,mass*0.10))
-        self.w.factory("ALPHA1[1.2,0.0,18]")
+        self.w.factory("ALPHA1[1.8,0.0,2]")
         self.w.factory("N1[5,0,600]")
         if singleSided:
             self.w.factory("ALPHA2[1000000.0]")
