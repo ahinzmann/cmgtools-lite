@@ -56,6 +56,8 @@ and user your current directory as basedir.
 
 Before running, initialiaze the `basedir` variable in `makeInputs.py` to your `simboliklinkname`
 
+**Important: many of the following commands may take a long time to complete. It is recommended to use `screen` or `tmux` sessions if you are running locally**
+
 ### Make inclusive control plots with data ###
 
 Control plots to check data versus MC agreement with just preselections applied can be made for several variables with the script `make-control-plots-submit.py` where the list of
@@ -128,6 +130,12 @@ The `makeInputs.py` script allows to create all the simulation templates, normal
 
 ## 2. Make the 3D templates. ##
  * QCD (tipically for NP category, in batch it will automatically produce pythia, madgraph and herwig):
+ 
+ First obtain the detector scale and resolution used in the template production
+ ```
+ python makeInputs.py -p 2016 --run "detector" --batch False  
+ ```
+ then you can start producing the templates as follows
  ```
  python makeInputs.py -p 2016 --run "qcdtemplates" -c "NP"
  ```
