@@ -28,7 +28,10 @@ cd ../..
 export GITUSER=`git config user.github`
 git clone https://github.com/${GITUSER}/cmgtools-lite CMGTools
 cd CMGTools
-git remote add Diboson3D https://github.com/Diboson3D/cmgtools-lite -b VV_VH_revised
+git remote add Diboson3D https://github.com/Diboson3D/cmgtools-lite
+# execute the following command:
+# git branch
+# and make sure that you are on VV_VH_revised
 git fetch Diboson3D
 git checkout -b VV_VH_revised Diboson3D/VV_VH_revised
 scram b -j 8
