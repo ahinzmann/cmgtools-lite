@@ -87,7 +87,9 @@ and non VBF for the same year) an additional label can be added with `-l`.
 
 # Make inputs to 3D fit #
 
-The `makeInputs.py` script allows to create all the simulation templates, normalizations and data inputs. To run on a single year use `-p "year"`, to run on more years separate them with a coma. Except for signals, when running on Run2, use the batch submission and the option `--sendjobs False` to merge the batch jobs. In the script it is possible to select on which analysis category to run with the option `-c`. By default the script runs on the 5 main ggDY categories. If the option `--vbf` is used the VBF version of the categories specified with `-c` are also produced. In general use `--vbf` to produce the normalizations also for VBF categories and not for making templates. The option `--vv` runs on VV categories without veto on VH.
+The `makeInputs.py` script allows to create all the simulation templates, normalizations and data inputs. To run on a single year use `-p "year"`, to run on more years separate them with a coma. Except for signals, when running on Run2, use the batch submission and the option `--sendjobs False` to merge the batch jobs. In the script it is possible to select on which analysis category(*) to run with the option `-c`. By default the script runs on the 5 main ggDY categories. If the option `--vbf` is used the VBF version of the categories specified with `-c` are also produced. In general, use `--vbf` to produce the normalizations also for VBF categories and not for making templates. The option `--vv` runs on VV categories without veto on VH.
+
+(*) This specific analysis has 10 categories. First events are divided in two orthogonal subtagories depending on the resonance production mode: Vector Bososn Fusion (VBF) vs gluon-gluon fusion (ggF) and Drell-Yan. These two categories are then subdivided into 5 tagging categories depending on the type (W/Z->qq or H/Z->bb) and the purity of the tagging. The 5 tagging categories are: VH HPHP, VV HPHP, VH LPHP, VH HPLP, VV HPLP.
 
 ## 1. Make the normalizations ##
  * QCD (in batch it will automatically produce pythia, madgraph and herwig)
