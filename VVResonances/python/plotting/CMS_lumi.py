@@ -21,6 +21,8 @@ class CMSPlotLabel:
 
         if extraText!='':
             self.writeExtraText=1
+        else:
+            self.writeExtraText=0
 
     def __call__(self,pad,iPeriod,iPosX):    
         outOfFrame    = False
@@ -46,9 +48,9 @@ class CMSPlotLabel:
         pad.cd()
         
         lumiText = self.periods[iPeriod]['lumi']+""+self.periods[iPeriod]['energy']+""
-        if self.extraText=='Simulation':
-            lumiText=''
-        
+        #if self.extraText=='Simulation':
+        #    lumiText=''
+
 
         latex = rt.TLatex()
         latex.SetNDC()
@@ -122,6 +124,8 @@ class CMSPlotLabel:
 cmslabel_prelim=CMSPlotLabel("CMS","Preliminary")
 cmslabel_int=CMSPlotLabel("CMS","Internal")
 cmslabel_sim=CMSPlotLabel("CMS","Simulation")
+cmslabel_thesis=CMSPlotLabel("","Simulation",{'sim':{'lumi':'','energy':'13 TeV'}})
+cmslabel_empty=CMSPlotLabel("",'')
 cmslabel_sim_prelim=CMSPlotLabel("CMS","Simulation Preliminary")
 cmslabel_final=CMSPlotLabel("CMS")
 
