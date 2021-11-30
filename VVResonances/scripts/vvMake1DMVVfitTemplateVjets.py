@@ -82,9 +82,14 @@ def histoMaker(h,binning,name):
     print xmin,xmax
 
     expo=ROOT.TF1("expo","[0]*(1-x/13000.)^[1]/(x/13000)^[2]",xmin,xmax)
-    expo.SetParameters(0,16.,2.)                                                                                                                                                       
+    expo.SetParameters(0,16.,2.)
     expo.SetParLimits(2,1.,20.)
     expo.SetParLimits(1,20.,40.)
+
+    #print " &&&&&&&&&&&&&& commented default function and using 2 parameter function!! &&&&&&&&&&&&&&&&&&&"
+    #expo=ROOT.TF1("expo","[0]/(x/13000)^[1]",xmin,xmax)
+    #expo.SetParameters(0,16.)
+    #expo.SetParLimits(1,1.,20.)
 
     #for 16+17 VH HPHP
     #expo=ROOT.TF1("expo","exp(-x/([0]+[1]*x))",xmin,xmax)

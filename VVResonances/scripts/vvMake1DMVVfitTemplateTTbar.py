@@ -121,6 +121,11 @@ def histoMaker(h,binning,name):
     expo.SetParLimits(2,1.,20.)
     expo.SetParLimits(1,20.,40.) #comment for TT resT VH LPHP  16+17
 
+    #print " &&&&&&&&&&&&&& commented default function and using 2 parameter function!! &&&&&&&&&&&&&&&&&&&"
+    #expo=ROOT.TF1("expo","[0]/(x/13000)^[1]",xmin,xmax)
+    #expo.SetParameters(0,16.)
+    #expo.SetParLimits(1,1.,20.)
+
     # for TT resT VH LPHP  16+17
     #expo.SetParameters(0,30.,0.)
     #expo.SetParLimits(2,0.,0.)
