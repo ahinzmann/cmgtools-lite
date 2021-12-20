@@ -2443,13 +2443,13 @@ def makePseudoDataVjets(input,kernel,mc,output,lumi,workspace,year,purity,rescal
 
 
 
-def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,purity,rescale,qcdsf):
+def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,purity,rescale,qcdsf,totalscale=1.):
  cat = purity
  if "VBF" in input and purity.find("VBF") == -1: cat = "VBF_"+purity
  pwd = os.getcwd()
  pwd = "/"
  ROOT.gRandom.SetSeed(123)
- 
+
  finmc = ROOT.TFile.Open(pwd+'/'+input,'READ')
  hmcin = finmc.Get('nonRes')
 
@@ -2473,7 +2473,7 @@ def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,pu
      print "QCD will be riscale by ",qcdsf
      nEventsQCD = int(hmcin.Integral()*lumi*qcdsf)
  print "Expected QCD events: ",nEventsQCD
- hout.FillRandom(hdata,nEventsQCD)
+ hout.FillRandom(hdata,int(nEventsQCD*totalscale))
  
  print "Vjets from WS"
  ws_file = ROOT.TFile.Open(workspace,'READ')
@@ -2501,7 +2501,7 @@ def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,pu
 
  nEventsW = o_norm_wjets.getVal()
  print "Expected W+jets events: ",nEventsW
- wjets = modelWjets.generate(args,int(nEventsW))
+ wjets = modelWjets.generate(args,int(nEventsW*totalscale))
  if wjets!=None:
      #print signal.sumEntries()
      for i in range(0,int(wjets.sumEntries())):
@@ -2524,7 +2524,7 @@ def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,pu
  
  nEventsZ = o_norm_zjets.getVal()
  print "Expected Z+jets events: ",nEventsZ
- zjets = modelZjets.generate(args,int(nEventsZ))
+ zjets = modelZjets.generate(args,int(nEventsZ*totalscale))
  if zjets!=None:
      #print signal.sumEntries()
      for i in range(0,int(zjets.sumEntries())):
@@ -2553,7 +2553,7 @@ def makePseudoDataVjetsTT(input,input_tt,kernel,mc,output,lumi,workspace,year,pu
 
      nEventsTT[t] = o_norm_ttjets.getVal()
      print "Expected TTJets "+t+" events: ",nEventsTT[t]
-     ttjets[t] = modelTTJets[t].generate(args,int(nEventsTT[t]))
+     ttjets[t] = modelTTJets[t].generate(args,int(nEventsTT[t]*totalscale))
      if ttjets[t]!=None:
          #print signal.sumEntries()
          for i in range(0,int(ttjets[t].sumEntries())):
@@ -2698,7 +2698,7 @@ def makePseudoDataNoQCD(input_tt,output,lumi,workspace,year,purity):
 
  fout.Close()    
 
-def makePseudoDataTT(input_tt,output,lumi,year,purity):
+def makePseudoDataTT(input_tt,output,lumi,year,purity,hist):
 
  pwd = os.getcwd()
  pwd = "/"
@@ -2706,7 +2706,7 @@ def makePseudoDataTT(input_tt,output,lumi,year,purity):
  fout = ROOT.TFile.Open(output,'RECREATE')
  
  ftt = ROOT.TFile.Open(input_tt,'READ')
- hin_tt = ftt.Get('TTJets')
+ hin_tt = ftt.Get(hist)
  xbins = array("f",getListOfBinsLowEdge(hin_tt,"x"))
  zbins = array("f",getListOfBinsLowEdge(hin_tt,"z"))
 
@@ -2721,7 +2721,7 @@ def makePseudoDataTT(input_tt,output,lumi,year,purity):
  print "lumi     ", lumi
  print "year     ", year
  print "purity   ", purity
- print "Expected TTJets events:",int(hin_tt.Integral()*lumi)
+ print "Expected "+hist+" events:",int(hin_tt.Integral()*lumi)
  print "Writing histograms nonRes and data to file ", output
 
 
