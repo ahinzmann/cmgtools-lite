@@ -307,6 +307,7 @@ if __name__=="__main__":
                 signal_expected[period] = [ (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName], (args[pdf1Name[period]].getComponents())["n_exp_final_binJJ_"+purity+"_13TeV_"+period+"_proc_"+signalName].getPropagatedError(fitresult)]
                 fitted_r = workspace.var("r").getVal()
                 print "Fitted signal yields:",signal_expected[period][0].getVal()," +/- ", signal_expected[period][1] ,"(",period,")"
+                print " fitted r ",fitted_r
         print 
           	 	 	
          
@@ -338,7 +339,7 @@ if __name__=="__main__":
              resInv[2].Sumw2()
              res[2].Add(resInv[2])
              if options.fit:
-                 #adding error band. The middle point in added while the uncertainty is averaged
+                 #adding error band. The middle point is added while the uncertainty is averaged
                  N =  res[7][0].GetN()
                  for i in range(N):
                      X = ROOT.Double()
@@ -362,19 +363,154 @@ if __name__=="__main__":
                      res[7][0].SetPointEXlow(i,X)
 
          if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
-         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both)
+         fr = 0
+         if options.fitSignal: fr = fitted_r
+         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both,fr)
      #make projections onto MJ1 axis
      if options.projection =="x" or options.projection =="xyz":
          results = []
          res = forproj.doProjection(data[period],allpdfsx[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+
+         if options.both == True:
+             resInv = forprojInv.doProjection(data[period],allpdfsx[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+             for i in range(len(res[0])):
+                 res[0][i].Sumw2()
+                 resInv[0][i].Sumw2()
+                 res[0][i].Add(resInv[0][i])
+             res[1].Sumw2()
+             resInv[1].Sumw2()
+             res[1].Add(resInv[1])
+             res[2].Sumw2()
+             resInv[2].Sumw2()
+             res[2].Add(resInv[2])
+             if options.fit:
+                 #adding error band. The middle point is added while the uncertainty is averaged
+                 N =  res[7][0].GetN()
+                 for i in range(N):
+                     X = ROOT.Double()
+                     Y = ROOT.Double()
+                     res[7][0].GetPoint(i,X,Y)
+                     XI = ROOT.Double()
+                     YI = ROOT.Double()
+                     resInv[7][0].GetPoint(i,XI,YI)
+                     res[7][0].SetPoint(i,X,Y+YI)
+                     Y = res[7][0].GetErrorYhigh(i)
+                     X = res[7][0].GetErrorXhigh(i)
+                     YI = resInv[7][0].GetErrorYhigh(i)
+                     XI = resInv[7][0].GetErrorXhigh(i)
+                     res[7][0].SetPointEYhigh(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXhigh(i,X)
+                     Y = res[7][0].GetErrorYlow(i)
+                     X = res[7][0].GetErrorXlow(i)
+                     YI = resInv[7][0].GetErrorYlow(i)
+                     XI = resInv[7][0].GetErrorXlow(i)
+                     res[7][0].SetPointEYlow(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXlow(i,X)
+
          if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
-         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
+         fr = 0
+         if options.fitSignal: fr = fitted_r
+         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both,fr,binwidth)
      #make projections onto MJ2 axis
      if options.projection =="y" or options.projection =="xyz":
          results = []
          res = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+
+         if options.both == True:
+             resInv = forprojInv.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+             for i in range(len(res[0])):
+                 res[0][i].Sumw2()
+                 resInv[0][i].Sumw2()
+                 res[0][i].Add(resInv[0][i])
+             res[1].Sumw2()
+             resInv[1].Sumw2()
+             res[1].Add(resInv[1])
+             res[2].Sumw2()
+             resInv[2].Sumw2()
+             res[2].Add(resInv[2])
+             if options.fit:
+                 #adding error band. The middle point is added while the uncertainty is averaged
+                 N =  res[7][0].GetN()
+                 for i in range(N):
+                     X = ROOT.Double()
+                     Y = ROOT.Double()
+                     res[7][0].GetPoint(i,X,Y)
+                     XI = ROOT.Double()
+                     YI = ROOT.Double()
+                     resInv[7][0].GetPoint(i,XI,YI)
+                     res[7][0].SetPoint(i,X,Y+YI)
+                     Y = res[7][0].GetErrorYhigh(i)
+                     X = res[7][0].GetErrorXhigh(i)
+                     YI = resInv[7][0].GetErrorYhigh(i)
+                     XI = resInv[7][0].GetErrorXhigh(i)
+                     res[7][0].SetPointEYhigh(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXhigh(i,X)
+                     Y = res[7][0].GetErrorYlow(i)
+                     X = res[7][0].GetErrorXlow(i)
+                     YI = resInv[7][0].GetErrorYlow(i)
+                     XI = resInv[7][0].GetErrorXlow(i)
+                     res[7][0].SetPointEYlow(i,(Y+YI)/2.) #average
+                     res[7][0].SetPointEXlow(i,X)
+
+
+
+
          if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
-         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,binwidth)
+         fr = 0
+         if options.fitSignal: fr = fitted_r
+         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both,fr,binwidth)
+
+
+
+     #make projections of both jet masses - projection b should be combined with option both
+     if options.projection =="b" or options.projection =="bz":
+         results = []
+         res = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"x",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+
+         if options.both == True:
+             resInv = forproj.doProjection(data[period],allpdfsy[period],all_expected[period],"y",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+             for i in range(len(res[0])):
+                 res[0][i].Sumw2()
+                 resInv[0][i].Sumw2()
+                 res[0][i].Add(resInv[0][i])
+             res[1].Sumw2()
+             resInv[1].Sumw2()
+             res[1].Add(resInv[1])
+             res[2].Sumw2()
+             resInv[2].Sumw2()
+             res[2].Add(resInv[2])
+             if options.fit:
+                 #adding error band. The middle point is added while the uncertainty is summed
+                 N =  res[7][0].GetN()
+                 for i in range(N):
+                     X = ROOT.Double()
+                     Y = ROOT.Double()
+                     res[7][0].GetPoint(i,X,Y)
+                     XI = ROOT.Double()
+                     YI = ROOT.Double()
+                     resInv[7][0].GetPoint(i,XI,YI)
+                     res[7][0].SetPoint(i,X,Y+YI)
+                     Y = res[7][0].GetErrorYhigh(i)
+                     X = res[7][0].GetErrorXhigh(i)
+                     YI = resInv[7][0].GetErrorYhigh(i)
+                     XI = resInv[7][0].GetErrorXhigh(i)
+                     res[7][0].SetPointEYhigh(i,Y+YI) #sum
+                     res[7][0].SetPointEXhigh(i,X)
+                     Y = res[7][0].GetErrorYlow(i)
+                     X = res[7][0].GetErrorXlow(i)
+                     YI = resInv[7][0].GetErrorYlow(i)
+                     XI = resInv[7][0].GetErrorXlow(i)
+                     res[7][0].SetPointEYlow(i,Y+YI) #sum
+                     res[7][0].SetPointEXlow(i,X)
+
+
+
+
+         if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
+         fr = 0
+         if options.fitSignal: fr = fitted_r
+
+         forplotting.MakePlots(res[0],res[1],res[2],'b',res[4],res[5], res[6],res[7],options.pseudo,options.both,fr,binwidth)
 
 
         

@@ -156,12 +156,14 @@ class Postfitplotter():
                 logfile.write( "mean : "+str(mean)+"  RMS "+str(rms)+" \n")
                 chi2 = self.getChi2proj(pred,hsig,mean-rms,mean+rms)
                 print hsig.GetEntries(),hsig.Integral()
-                logfile.write( "Projection %s: Chi2/ndf = %.2f/%i"%(axis,chi2[0],chi2[1])+"= %.2f"%(chi2[0]/chi2[1])+" prob = "+str(ROOT.TMath.Prob(chi2[0],chi2[1]))+"\n")
+                if chi2[1]!=0:
+                    logfile.write( "Projection %s: Chi2/ndf = %.2f/%i"%(axis,chi2[0],chi2[1])+"= %.2f"%(chi2[0]/chi2[1])+" prob = "+str(ROOT.TMath.Prob(chi2[0],chi2[1]))+"\n")
                 
                 logfile.write("\n chi2 basen on window 10% around the mean:  \n")
                 chi2 = self.getChi2proj(pred,hsig,mean*0.9,mean*1.1)
                 print hsig.GetEntries(),hsig.Integral()
-                logfile.write( "Projection %s: Chi2/ndf = %.2f/%i"%(axis,chi2[0],chi2[1])+"= %.2f"%(chi2[0]/chi2[1])+" prob = "+str(ROOT.TMath.Prob(chi2[0],chi2[1]))+"\n")
+                if chi2[1]!=0:
+                    logfile.write( "Projection %s: Chi2/ndf = %.2f/%i"%(axis,chi2[0],chi2[1])+"= %.2f"%(chi2[0]/chi2[1])+" prob = "+str(ROOT.TMath.Prob(chi2[0],chi2[1]))+"\n")
         
 
     def addPullPlot(self,hdata,hpostfit,nBins,error_band):
@@ -171,13 +173,43 @@ class Postfitplotter():
         gt = ROOT.TH1F("gt","gt",len(nBins)-1,nBins)
         for i in range(1,N+1):
             m = hdata.GetXaxis().GetBinCenter(i)
-            #ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/hdata.GetBinErrorUp(i)
+            # nominal way of calculating pulls
+            #The pull is defined as (Data-fit)/$\sigma$, with $\sigma=\sqrt{\sigma_\mathrm{data}^2-\sigma_\mathrm{fit}^2}$ for each bin to ensure a Gaussian pull-distribution, as defined in Ref.~\cite{CDF:AN5776}.
             if hpostfit.GetBinContent(i) <= hdata.GetBinContent(i):
                 if error_band !=0: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Abs(hdata.GetBinErrorUp(i))
                 else: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
             else:
                 if error_band!=0: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Sqrt(ROOT.TMath.Abs( pow(hdata.GetBinErrorUp(i),2) - pow(error_band.GetErrorYlow(i-1),2) ))
                 else: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
+
+            '''
+            #Alternative way of calculating pulls with pvalue
+            if error_band !=0:
+                ypostfit = ROOT.Math.normal_quantile(ROOT.Math.poisson_cdf(int(hdata.GetBinContent(i)),hpostfit.GetBinContent(i)),1)
+                if hpostfit.GetBinContent(i) < 1 and hdata.GetBinContent(i) == 0.0: ypostfit = 0.
+            else:
+                if hdata.GetBinErrorUp(i) == 0.0:
+                    ypostfit =0
+                else:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
+            '''
+
+            '''
+            print "^*^*^*^*^*^*^*^*^  Alternative way of calculating pulls with error from model / postfit ^*^*^*^*^*^*^*^*^*^*^*^*^"
+            if error_band !=0:
+                if ROOT.TMath.Sqrt(ROOT.TMath.Abs(hpostfit.GetBinContent(i)-pow(error_band.GetErrorYlow(i-1),2))) !=0:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Sqrt(ROOT.TMath.Abs(hpostfit.GetBinContent(i)-pow(error_band.GetErrorYlow(i-1),2)))
+                elif hpostfit.GetBinContent(i) == 0. and hdata.GetBinContent(i) == 0.:
+                    ypostfit = 0.
+                else:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ROOT.TMath.Sqrt(hpostfit.GetBinContent(i))
+            else:
+                if hpostfit.GetBinContent(i) == 0. and hdata.GetBinContent(i) == 0.:
+                    ypostfit = 0.
+                else:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ROOT.TMath.Sqrt(hpostfit.GetBinContent(i)) # hdata.GetBinErrorUp(i)
+            '''
+
             gpost.SetPoint(i-1,m,ypostfit)
             gt.SetBinContent(i,ypostfit)
             #print "bin",i,"x",m,"data",hdata.GetBinContent(i),"post fit",hpostfit.GetBinContent(i),"err data",hdata.GetBinErrorUp(i),"err fit",error_band.GetBinError(i),"pull postfit",ypostfit
@@ -195,8 +227,8 @@ class Postfitplotter():
         #gt = ROOT.TH1F("gt","gt",len(nBins)-1,nBins)
         gt.SetTitle("")
         #gt.SetMinimum(0.5);
-        #gt.SetMaximum(1.5);
-        gt.SetMinimum(-3.5);
+        gt.SetMaximum(4);
+        gt.SetMinimum(-4);
         #gt.SetMaximum(3.5);
         gt.SetDirectory(0);
         gt.SetStats(0);
@@ -234,6 +266,14 @@ class Postfitplotter():
             if hdata.GetBinContent(i) == 0:
                 continue
             ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/hdata.GetBinError(i)
+
+            #"^*^*^*^*^*^*^*^*^  Alternative way of calculating pulls with error from model / postfit ^*^*^*^*^*^*^*^*^*^*^*^*^"
+            #ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Sqrt(hpostfit.GetBinContent(i))
+            #if hpostfit.GetBinContent(i) < 1 and hdata.GetBinContent(i) == 0.0: ypostfit = 0.
+
+            #"^*^*^*^*^*^*^*^*^  Alternative way of calculating pulls from p-value ^*^*^*^*^*^*^*^*^*^*^*^*^"
+            #ypostfit = ROOT.Math.normal_quantile(ROOT.Math.poisson_cdf(int(hdata.GetBinContent(i)),hpostfit.GetBinContent(i)),1)
+
             gpost.SetPoint(i-1,m,ypostfit)
             gt.SetBinContent(i,ypostfit)
             gt.SetBinError(i,1)
@@ -456,14 +496,42 @@ class Postfitplotter():
         pad.SetTickx()
         pad.SetTicky()
         
-        pad.SetBottomMargin(0.01)    
+        pad.SetBottomMargin(0.02)
         pad.SetTopMargin(0.1) 
         
         return pad
 
 
+    def fromGeVtoTeV(self,hist,scale=1000.):
+        xaxis =  hist.GetXaxis()
+        xbins = []
+        xbins = xaxis.GetXbins()
+        for i in range(xbins.GetSize()):
+            xbins[i] = xbins[i]/scale
+        xaxis.Set((xbins.GetSize() - 1), xbins.GetArray())
+        return hist
 
-    def MakePlots(self,histos,hdata,hsig,axis,nBins,maxY=-1.,normsig = 1.,errors=None,pseudo=False,both=False,binwidth=4):
+    def fromGeVtoTeVGraph(self,graph,scale=1000.):
+        N =  graph.GetN()
+        syst_band_scaled = ROOT.TGraphAsymmErrors()
+        syst_band_scaled.Copy(graph)
+        for i in range(N):
+            X = ROOT.Double()
+            Y = ROOT.Double()
+            graph.GetPoint(i,X,Y)
+            syst_band_scaled.SetPoint(i,X/scale,Y)
+            Y = graph.GetErrorYhigh(i)
+            X = graph.GetErrorXhigh(i)
+            syst_band_scaled.SetPointEYhigh(i,Y)
+            syst_band_scaled.SetPointEXhigh(i,X/scale)
+            Y = graph.GetErrorYlow(i)
+            X = graph.GetErrorXlow(i)
+            syst_band_scaled.SetPointEYlow(i,Y)
+            syst_band_scaled.SetPointEXlow(i,X/scale)
+
+        return syst_band_scaled
+
+    def MakePlots(self,histos,hdata,hsig,axis,nBins,maxY=-1.,normsig = 1.,errors=None,pseudo=False,both=False,fitted_r=0,binwidth=4):
         print histos
         extra1 = ''
         extra2 = ''
@@ -476,7 +544,7 @@ class Postfitplotter():
         zrange = self.options.zrange
         if self.options.xrange == '0,-1': xrange = '55,215'
         if self.options.yrange == '0,-1': yrange = '55,215'
-        if self.options.zrange == '0,-1': zrange = '1246,7600' #5500'
+        if self.options.zrange == '0,-1': zrange = '1.25,6.0' #5500'
         xlow = xrange.split(',')[0]
         xhigh = xrange.split(',')[1]
         ylow = yrange.split(',')[0]
@@ -493,7 +561,7 @@ class Postfitplotter():
             print "make Z projection"
             htitle = "Z-Proj. x : "+self.options.xrange+" y : "+self.options.yrange
             hhtitle = self.options.channel
-            xtitle = "Dijet invariant mass [GeV]"
+            xtitle = "Dijet invariant mass [TeV]"
             ymin = 0.2
             ymax = max(hdata.GetMaximum()*5000,maxY*5000)
             extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
@@ -503,8 +571,8 @@ class Postfitplotter():
             if self.options.blind == True and len(yrange.split(',')) == 4:
                 extra2 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
             if both == True:
-                extra1 = xrange.split(',')[0]+' < m_{jet1/2} < '+ xrange.split(',')[1]+' GeV'
-                extra2 = yrange.split(',')[0]+' < m_{jet2/1} < '+ yrange.split(',')[1]+' GeV'
+                extra1 = str(round(float(xrange.split(',')[0])))+' < m_{jet1/2} < '+ str(round(float(xrange.split(',')[1])))+' GeV'
+                extra2 = str(round(float(yrange.split(',')[0])))+' < m_{jet2/1} < '+ str(round(float(yrange.split(',')[1])))+' GeV'
         elif axis=='x':
             print "make X projection"
             htitle = "X-Proj. y : "+self.options.yrange+" z : "+self.options.zrange
@@ -517,7 +585,7 @@ class Postfitplotter():
             extra1 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(yrange.split(',')) == 4:
                 extra1 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra1 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' GeV'
+            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
         elif axis=='y':
             print "make Y projection"
             htitle = "Y-Proj. x : "+self.options.xrange+" z : "+self.options.zrange
@@ -531,11 +599,27 @@ class Postfitplotter():
             extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(xrange.split(',')) == 4:
                 extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' GeV'
+            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
+        elif axis=='b':
+            print "make X+Y projection"
+            htitle = "XY-Proj. x : "+self.options.xrange+" y  : "+self.options.yrange+" z : "+self.options.zrange
+            hhtitle = self.options.channel
+            xtitle = " m_{jet} [GeV]"
+            ymin = 0.02
+            ymax = hdata.GetMaximum()*2.5#max(hdata.GetMaximum()*1.3,maxY*1.3)
+            if "VBF" in self.options.channel:
+                ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
+
+            extra1 = xrange.split(',')[0]+' < m_{jet1,2} < '+ xrange.split(',')[1]+' GeV'
+            if self.options.blind == True and len(xrange.split(',')) == 4:
+                extra1 = 'Blind '+xhigh+' < m_{jet} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
+
+
                     
         #leg = ROOT.TLegend(0.450436242,0.5531968,0.7231544,0.8553946)
         #leg = ROOT.TLegend(0.55809045,0.3063636,0.7622613,0.8520979)
-        leg = ROOT.TLegend(0.45,0.45,0.82,0.88)
+        leg = ROOT.TLegend(0.5,0.45,0.82,0.88)
         leg.SetTextSize(0.045)
         c = self.get_canvas('c')
         pad1 = self.get_pad("pad1") #ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
@@ -551,11 +635,15 @@ class Postfitplotter():
         histos[0].SetLineColor(self.colors[0])
         histos[0].SetLineWidth(2)
         histos[0].GetXaxis().SetTitle(xtitle)
+        histos[0].GetXaxis().SetLabelSize(0.0)
         histos[0].GetYaxis().SetTitleOffset(1.3)
         histos[0].GetYaxis().SetTitle("Events")
         histos[0].GetYaxis().SetTitleOffset(1.3)
         histos[0].GetYaxis().SetTitle("Events / "+str(binwidth)+" GeV")
-        if axis == 'z': histos[0].GetYaxis().SetTitle("Events / 100 GeV")
+        if axis == 'z':
+            histos[0].GetYaxis().SetTitle("Events / 100 GeV")
+            histos[0] = self.fromGeVtoTeV(histos[0])
+            histos[0].GetXaxis().SetRangeUser(1.246,6.)
         histos[0].GetYaxis().SetTitleSize(0.06)
         histos[0].GetYaxis().SetLabelSize(0.06)
         histos[0].Draw('HIST')
@@ -564,6 +652,10 @@ class Postfitplotter():
         print "---------------------------------------------------------------------------------------"
 
         if len(histos)>1:
+            if axis == 'z':
+                histos[1]= self.fromGeVtoTeV(histos[1])
+                histos[2]= self.fromGeVtoTeV(histos[2])
+
             histos[1].SetLineColor(self.colors[1])
             histos[1].SetLineWidth(2)
             
@@ -574,16 +666,26 @@ class Postfitplotter():
             if self.options.addTop:
                 histos[3].SetLineColor(self.colors[3])
                 histos[3].SetLineWidth(2)
+                if axis == 'z':
+                    histos[3] =self.fromGeVtoTeV(histos[3])
+
             if self.options.addDIB:
                 histos[4].SetLineColor(self.colors[4])
                 histos[4].SetLineWidth(2)
                 histos[5].SetLineColor(self.colors[5])
                 histos[5].SetLineWidth(2)
-            
+                if axis == 'z':
+                    histos[4] = self.fromGeVtoTeV(histos[4])
+                    histos[5]= self.fromGeVtoTeV(histos[5])
+
         for i in range(4,len(histos)):
             histos[i].SetLineColor(self.colors[i])
+            if axis == 'z':
+                histos[i] = self.fromGeVtoTeV(histos[i])
+
             histos[i].Draw("histsame")
             name = histos[i].GetName().split("_")
+
             #if len(name)>2:
                 #leg.AddEntry(histos[i],name[1],"l")
             #else:
@@ -592,14 +694,18 @@ class Postfitplotter():
         hdata.SetMarkerColor(ROOT.kBlack)
         hdata.SetLineColor(ROOT.kBlack)
         hdata.SetMarkerSize(0.7)
+        if axis == 'z':
+            hdata = self.fromGeVtoTeV(hdata)
 
         if errors!=None:
+            if axis == 'z':
+                errors[0] = self.fromGeVtoTeVGraph(errors[0])
             errors[0].SetFillColor(self.colors[0])
             errors[0].SetFillStyle(3001)
             errors[0].SetLineColor(self.colors[0])
             errors[0].SetLineWidth(0)
             errors[0].SetMarkerSize(0)
-        
+
         
         #change this scaling in case you don't want to plot signal! has to match number of generated signal events
         scaling = self.options.signalScaleF
@@ -609,11 +715,13 @@ class Postfitplotter():
         
         if hsig!= None: # and (self.options.name.find('sigonly')!=-1  and doFit==0):
             print "print do hsignal, that has integral ", hsig.Integral()
+            if axis == 'z':
+                hsig = self.fromGeVtoTeV(hsig)
             hsig.Write(self.signalName)
             if hsig.Integral()!=0. and scaling !=0 :   
                 #hsig.Scale(scaling/normsig.getVal())
                 print "sig integral ",hsig.Integral()
-                hsig.Scale(scaling/hsig.Integral())
+                hsig.Scale(scaling)
             print " after rescling check integral is ",hsig.Integral()
         
             hsig.SetFillColor(ROOT.kGreen-6)
@@ -671,7 +779,8 @@ class Postfitplotter():
         if errors!=None:
             leg.AddEntry(errors[0],"#pm 1#sigma unc.","f")
             errors[0].Write("syst_unc")
-            #to have the syst errors centered aroung zero (to be able to plot a nice pulls band) & rescaled by the stats unc.
+            #to have the syst errors centered around zero (to be able to plot a nice pulls band) & rescaled by the stats unc.
+            # these are used in the paper pull plot
             syst_band = ROOT.TGraphAsymmErrors()
             syst_band.Copy(errors[0])
             for i in range(0,errors[0].GetN()):
@@ -688,6 +797,24 @@ class Postfitplotter():
                 syst_band.SetPointEYlow(i,Y/hdata.GetBinError(i+1))
                 syst_band.SetPointEXlow(i,X)
             syst_band.Write("syst_band")
+
+            syst_band_fit = ROOT.TGraphAsymmErrors()
+            syst_band_fit.Copy(errors[0])
+            for i in range(0,errors[0].GetN()):
+                X = ROOT.Double()
+                Y = ROOT.Double()
+                errors[0].GetPoint(i,X,Y)
+                syst_band_fit.SetPoint(i,X,0)
+                if histos[0].GetBinContent(i+1) ==0: continue
+                Y = errors[0].GetErrorYhigh(i)
+                X = hdata.GetBinWidth(i+1)/2
+                syst_band_fit.SetPointEYhigh(i,Y/ROOT.TMath.Sqrt(histos[0].GetBinContent(i+1)))
+                syst_band_fit.SetPointEXhigh(i,X)
+                Y = errors[0].GetErrorYlow(i)
+                syst_band_fit.SetPointEYlow(i,Y/ROOT.TMath.Sqrt(histos[0].GetBinContent(i+1)))
+                syst_band_fit.SetPointEXlow(i,X)
+            syst_band_fit.Write("syst_band_fit")
+
         if len(histos)>1 and "ttbar" not in self.options.output:
             leg.AddEntry(histos[1],"W+jets","l")  ; print "Wjets ", histos[1].Integral(); nevents["Wjets"] = histos[1].Integral()
             histos[1].Write("Wjets")
@@ -757,6 +884,7 @@ class Postfitplotter():
                 text = "W' (%i TeV) #rightarrow WH"%(self.options.signalMass/1000.)
 
         rescaletext = "(#times %i)"%scaling
+        if scaling ==0: rescaletext = "(%f)"%fitted_r
         if self.signalName.find("VBF") !=-1:
             text = "VBF "+text
 
@@ -795,7 +923,7 @@ class Postfitplotter():
         pt2.SetBorderSize(0)
         pt2.SetFillStyle(0)
         categorystring= self.options.channel.replace('_control_region','').replace("_"," ")
-        if categorystring.find("VBF")==-1: "DY/gg "+categorystring
+        if categorystring.find("VBF")==-1: categorystring="DY/gg "+categorystring
         print " categorystring ",categorystring
         pt2.AddText(categorystring+" category")
         #pt2.AddText("category  "+self.options.channel)
@@ -821,7 +949,7 @@ class Postfitplotter():
         c.Update()
         c.cd()
         pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
-        pad2.SetTopMargin(0.01)
+        pad2.SetTopMargin(0.04)
         pad2.SetBottomMargin(0.4)
         #pad2.SetGridy()
         pad2.Draw()
@@ -840,9 +968,13 @@ class Postfitplotter():
             graphs = self.addPullPlot(hdata,histos[0],nBins,errors[0])
             statgraphs = self.addStatPullPlot(hdata,histos[0],nBins)
         # graphs = addRatioPlot(hdata,histos[0],nBins,errors[0])
-        graphs[0].Draw("HIST")
+        if axis == 'z':
+            graphs[0] = self.fromGeVtoTeV(graphs[0])
         graphs[0].Write("pulls_syst_stat")
         statgraphs[0].Write("pulls_stat")
+        if axis == 'z':
+            graphs[0].GetXaxis().SetRangeUser(1.246,6.)
+        graphs[0].Draw("HIST")
         if self.options.blind == True and axis != 'z' and drawBox == True:
             box = ROOT.TBox(65,graphs[0].GetMinimum(),140,graphs[0].GetMaximum())
             box.SetFillColor(0)
