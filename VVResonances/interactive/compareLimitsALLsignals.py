@@ -119,6 +119,7 @@ if "BulkGZZ" in options.sig:
   titleY ="#sigma x #bf{#it{#Beta}}("+VBFtype+"G_{Bulk} #rightarrow ZZ) [pb]  "
   titleX = "M_{G_{Bulk}} [TeV]"
   if "compareB2G18002" not in options.name:
+  #if "compareB2G18002" not in options.name and "no2p5TeV" not in options.name:
     plotCMSsemilepZnunu = True
     if "VBF" not in options.sig:
       plotCMS2016DIBcombo = True
@@ -200,6 +201,9 @@ files = ["Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_"+limitname+".root
 if options.name.find("compareB2G18002") !=-1:
   title = ["This analysis (78 fb^{-1})","This analysis (138 fb^{-1})"]
   files = ["Limits_"+options.sig+"_13TeV_1617_data_ggDYVBF_VVVH_partial_"+limitname+".root","Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_"+limitname+".root"]
+#if options.name.find("no2p5TeV") !=-1:
+#  title = ["with","without"]
+#  files = ["Limits_"+options.sig+"_13TeV_Run2_data_ggDYVBF_VVVH_"+limitname+".root","Limits_VBF_BulkGZZ_data_VBFggDY_VVVH_Run2_afterpreapproval_no2p5TeV.root"]
 
 
 scaleLimits = {}

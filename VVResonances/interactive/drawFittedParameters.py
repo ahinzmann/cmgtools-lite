@@ -1,4 +1,4 @@
-from ROOT import TFile, TCanvas, TPaveText, TLegend, gDirectory, TH1F,gROOT,gStyle, TLatex,TF1,TGraph
+from ROOT import TFile, TCanvas, TPaveText, TLegend, gDirectory, TH1F,gROOT,gStyle, TLatex,TF1,TGraph, Double, TSpline3, TGraphErrors
 import sys,copy
 import tdrstyle
 tdrstyle.setTDRStyle()
@@ -18,6 +18,30 @@ colors = ["#4292c6","#41ab5d","#ef3b2c","#ffd300","#D02090","#fdae61","#abd9e9",
 markerstyle = [21,8,23,4,25,32,22,26]
 linestyle = [1,2,3,4,5,6,7,8,9,1,2]
 mstyle = [8,4]
+
+def fromGeVtoTeV(hist,scale=1000.):
+    xaxis =  hist.GetXaxis()
+    xbins = []
+    xbins = xaxis.GetXbins()
+    for i in range(xbins.GetSize()):
+        xbins[i] = xbins[i]/scale
+    xaxis.Set((xbins.GetSize() - 1), xbins.GetArray())
+    return hist
+
+def fromGeVtoTeVGraph(graph,scale=1000.,scaleY=1.):
+    N =  graph.GetN()
+    syst_band_scaled = TGraphErrors()
+    syst_band_scaled.Copy(graph)
+    for i in range(N):
+        X = Double()
+        Y = Double()
+        graph.GetPoint(i,X,Y)
+        syst_band_scaled.SetPoint(i,X/scale,Y/scaleY)
+        Y = Double()
+        Y = graph.GetErrorY(i)
+        syst_band_scaled.SetPointError(i,0.,Y/scaleY)
+    return syst_band_scaled
+
 
 def beautify(h1,color,linestyle=1,markerstyle=8):
     h1.SetLineColor(color)
@@ -96,7 +120,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
     signalmarker={}
     gr[category]={}
     c = getCanvas()
-    l = getLegend()#0.7788945,0.723362,0.9974874,0.879833)
+    l = getLegend(0.55,0.55,0.9522613,0.9020979)#0.7788945,0.723362,0.9974874,0.879833)
     l2 = getLegend(0.17,0.5783217,0.4974874,0.7482517)
     gStyle.SetOptStat(0)
     gStyle.SetOptTitle(0)
@@ -118,13 +142,17 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
         for k in range(0,gHPHP.GetN()): gHPHP.GetY()[k] *= 1000.
         
         if gHPHP.GetFunction("func")!=None:
-            print "polinomial function"
+            print "------------     polinomial function ----------------"
             gHPHP.GetFunction("func").SetBit(rt.TF1.kNotDraw)
             ftmpHPHP = gHPHP.GetFunction("func")
-            fHPHP = TF1("funcHP"+str(i),str(ftmpHPHP.GetExpFormula()).replace("func","")+"*1000.",ftmpHPHP.GetXmin(),ftmpHPHP.GetXmax())
+            gHPHP = fromGeVtoTeVGraph(gHPHP)
+            fHPHP = TF1("funcHP"+str(i),str(ftmpHPHP.GetExpFormula()).replace("func","")+"*1000.",ftmpHPHP.GetXmin()/1000.,ftmpHPHP.GetXmax()/1000.)
+            mult = 1. # mult is needed to shift GeV to TeV in polinomial parameters
             for o in range(0,ftmpHPHP.GetNpar()): 
-                fHPHP.SetParameter(o,ftmpHPHP.GetParameter(o))
+                fHPHP.SetParameter(o,ftmpHPHP.GetParameter(o)*mult)
+                mult*=1000.
         else: fHPHP = gHPHP
+
         signalcolor[signals[i]] = rt.TColor.GetColor(colors[i])
         signalline[signals[i]] = linestyle[i]
         signalmarker[signals[i]] = markerstyle[i]
@@ -136,14 +164,14 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
         fitsHP.append(fHPHP)
         l.AddEntry(fHPHP,titles[i],"LP")
     fitsHP[0].Draw("C")
-    l2.AddEntry(fitsHP[0],category,"")
-    fitsHP[0].GetXaxis().SetTitle("m_{X} [GeV]")
+    l2.AddEntry(fitsHP[0],category.replace("_"," "),"")
+    fitsHP[0].GetXaxis().SetTitle("m_{X} [TeV]")
     fitsHP[0].GetYaxis().SetTitle("Signal efficiency")
     fitsHP[0].GetYaxis().SetNdivisions(4,5,0)
     fitsHP[0].GetXaxis().SetNdivisions(5,5,0)
     fitsHP[0].GetYaxis().SetTitleOffset(1.15)
     fitsHP[0].GetXaxis().SetTitleOffset(0.9)
-    fitsHP[0].GetXaxis().SetRangeUser(1246, 6050.)
+    fitsHP[0].GetXaxis().SetRangeUser(1.3, 6.050)
     fitsHP[0].GetYaxis().SetRangeUser(0.0,0.3)
     if "VBF" in category: fitsHP[0].GetYaxis().SetRangeUser(0.0,0.1)
     #fitsHP[0].GetYaxis().SetRangeUser(0.0, ymaxrange[ky])
@@ -202,7 +230,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
         for c in categories: totsum += flipped[s][c].GetY()[i]
 
         tot[s].append( totsum )
-        Mass[s].append(flipped[s][categories[0]].GetX()[i] )
+        Mass[s].append(flipped[s][categories[0]].GetX()[i]/1000. )
 
     print tot[s]
 
@@ -210,7 +238,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
     gr_tot.SetLineColor(signalcolor[s])
     gr_tot.SetLineStyle(1)
     gr_tot.SetLineWidth(2)
-    gr_tot.GetXaxis().SetTitle("m_{X} [GeV]")
+    gr_tot.GetXaxis().SetTitle("m_{X} [TeV]")
     gr_tot.GetYaxis().SetTitle("Signal efficiency")
     gr_tot.GetYaxis().SetNdivisions(4,5,0)
     gr_tot.GetXaxis().SetNdivisions(5,5,0)
@@ -219,7 +247,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
     gr_tot.SetMarkerStyle(signalmarker[s])
     gr_tot.SetMinimum(0.)
     gr_tot.SetMaximum(0.5)
-    gr_tot.GetXaxis().SetLimits(1000.,6000.)
+    gr_tot.GetXaxis().SetLimits(1.3,6.05)
     gr_tot.SetTitle("")
     datatot.append(gr_tot)
 
@@ -243,7 +271,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
   ct.SaveAs(name+".pdf" )
   ct.SaveAs(name+".C"   )
   ct.SaveAs(name+".root")
-
+  '''
   tot_ggDY = {}
   ct = getCanvas()
   legt = getLegend(0.35,0.55,0.9522613,0.9020979)
@@ -404,7 +432,7 @@ def doSignalEff(directory,signals,titles,categories,ymaxrange=[0.3,0.5,0.05,0.05
       ct.SaveAs(name+".pdf" )
       ct.SaveAs(name+".C"   )
       ct.SaveAs(name+".root")
-
+  '''
 
 
 
@@ -443,7 +471,8 @@ def doJetMass(leg,signals,titles,categories):
        datasHjet=[]
         
        c = getCanvas()
-       l = getLegend()#0.7788945,0.723362,0.9974874,0.879833)
+       l = getLegend(0.5809045,0.55,0.9522613,0.9020979)#0.7788945,0.723362,0.9974874,0.879833)
+       if var == "sigma" or var == "n2": l = getLegend(0.48,0.55,0.9522613,0.9020979)
        l2 = getLegend(0.17,0.5783217,0.4974874,0.7482517)
        l3 = getLegend(0.18,0.5783217,0.6974874,0.2482517)
        gStyle.SetOptStat(0)
@@ -466,6 +495,18 @@ def doJetMass(leg,signals,titles,categories):
            gHPHP = fHP.Get(var)
            fHPHP = fHP.Get(var+"_func")
 
+           gHPLP = fromGeVtoTeVGraph(gHPLP)
+           gHPHP = fromGeVtoTeVGraph(gHPHP)
+
+           if fHPLP.InheritsFrom(TSpline3.Class()) == True:
+               fHPLP = TSpline3(var,gHPLP)
+           elif fHPLP.InheritsFrom(TF1.Class()) == True:
+               gHPLP.Fit(fHPLP)
+
+           if fHPHP.InheritsFrom(TSpline3.Class()) == True:
+               fHPHP = TSpline3(var,gHPHP)
+           elif fHPHP.InheritsFrom(TF1.Class()) == True:
+               gHPHP.Fit(fHPHP)
            
            beautify(fHPLP ,rt.TColor.GetColor(colors[i]),2,markerstyle[i])
            beautify(fHPHP ,rt.TColor.GetColor(colors[i]),1,markerstyle[i])
@@ -479,21 +520,22 @@ def doJetMass(leg,signals,titles,categories):
        print datasHjet 
        if len(categories) > 1: l2.AddEntry(datas[0],categories[0],"LP") 
        if len(categories)>1: l2.AddEntry(datasHjet[0],categories[1],"LP")    
-       datas[0].GetXaxis().SetTitle("m_{X} [GeV]")
+       datas[0].GetXaxis().SetTitle("m_{X} [TeV]")
        datas[0].GetYaxis().SetTitle(title+" [GeV]")
        datas[0].GetYaxis().SetNdivisions(4,5,0)
        datas[0].GetXaxis().SetNdivisions(5,5,0)
        datas[0].GetYaxis().SetTitleOffset(1.05)
        datas[0].GetXaxis().SetTitleOffset(0.9)
        datas[0].GetXaxis().SetRangeUser(1126, 6050.)
+       datas[0].GetXaxis().SetRangeUser(1.3, 6.050)
        datas[0].GetXaxis().SetLabelSize(0.05)
        datas[0].GetXaxis().SetTitleSize(0.06)
        datas[0].GetYaxis().SetLabelSize(0.05)
        datas[0].GetYaxis().SetTitleSize(0.06)
-       if var == "mean": datas[0].GetYaxis().SetRangeUser(75,150);  
+       if var == "mean": datas[0].GetYaxis().SetRangeUser(75,160);
        if var == "sigma": datas[0].GetYaxis().SetRangeUser(5,20.);
        if var == "alpha": datas[0].GetYaxis().SetRangeUser(0,5); datas[0].GetYaxis().SetTitle("alpha")
-       if var == "n": datas[0].GetYaxis().SetRangeUser(0,250); datas[0].GetYaxis().SetTitle("n")
+       if var == "n": datas[0].GetYaxis().SetRangeUser(0,50); datas[0].GetYaxis().SetTitle("n")
        if var == "alpha2": datas[0].GetYaxis().SetRangeUser(0,5); datas[0].GetYaxis().SetTitle("alpha2")
        if var == "n2": datas[0].GetYaxis().SetRangeUser(0,20); datas[0].GetYaxis().SetTitle("n2")
        datas[0].Draw("AP")
@@ -502,7 +544,7 @@ def doJetMass(leg,signals,titles,categories):
            gHP.Draw("Psame")
            fits[i].Draw("Csame")
            fitsHjet[i].Draw("Csame")
-       datas[0].GetXaxis().SetRangeUser(1126, 6050.)
+       datas[0].GetXaxis().SetRangeUser(1.25, 6.050)
        l.Draw("same")
        l2.Draw("same")
        if prelim.find("prelim")!=-1:
@@ -603,7 +645,8 @@ def doMVV(signals,titles,year):
         datasLP=[]
         
         c = getCanvas()
-        l = getLegend()
+        l = getLegend(0.5809045,0.55,0.9522613,0.9020979)
+        if var == "MEAN": l = getLegend(0.35,0.55,0.9522613,0.9020979)
         l2 = getLegend(0.7788945,0.1783217,0.9974874,0.2482517)
         gStyle.SetOptStat(0)
         gStyle.SetOptTitle(0)
@@ -621,6 +664,15 @@ def doMVV(signals,titles,year):
                 ff.SetLineColor(0)
                 ff.SetLineWidth(0)
 
+                if var == "MEAN" or var == "SIGMA":
+                    gHPHP = fromGeVtoTeVGraph(gHPHP,1000.,1000.)
+                else:
+                    gHPHP = fromGeVtoTeVGraph(gHPHP)
+
+                if fHPHP.InheritsFrom(TSpline3.Class()) == True:
+                    fHPHP = TSpline3(var,gHPHP)
+                elif fHPHP.InheritsFrom(TF1.Class()) == True:
+                    gHPHP.Fit(fHPHP)
                 #gHPHP.GetFunction(var+"_func").SetBit(rt.TF1.kNotDraw)
                 
                 # beautify(fHPLP ,rt.TColor.GetColor(colors[i]),9,1)
@@ -634,19 +686,25 @@ def doMVV(signals,titles,year):
                 l.AddEntry(fHPHP,titles[i],"LP")
         # l2.AddEntry(datasHP[0],"No JER","L")
  #        l2.AddEntry(datasLP[0],"JER","L")
-        datasHP[0].GetXaxis().SetTitle("M_{X} [GeV]")
-        datasHP[0].GetYaxis().SetTitle(var+" [GeV]")
+        datasHP[0].GetXaxis().SetTitle("M_{X} TeV]")
+        datasHP[0].GetYaxis().SetTitle(var)
         datasHP[0].GetYaxis().SetNdivisions(4,5,0)
         datasHP[0].GetXaxis().SetNdivisions(9,2,0)
-        datasHP[0].GetYaxis().SetTitleOffset(0.97)
+        datasHP[0].GetYaxis().SetTitleOffset(1.05)
         datasHP[0].GetYaxis().SetMaxDigits(2)
+        if var == "SIGMA": datasHP[0].GetYaxis().SetMaxDigits(3)
         datasHP[0].GetXaxis().SetTitleOffset(0.94)
-        datasHP[0].GetXaxis().SetRangeUser(1126, 6050.)
+        datasHP[0].GetXaxis().SetRangeUser(1.25, 6.05)
         datasHP[0].GetYaxis().SetRangeUser(-2., 3.)
+        datasHP[0].GetXaxis().SetLabelSize(0.05)
+        datasHP[0].GetXaxis().SetTitleSize(0.06)
+        datasHP[0].GetYaxis().SetLabelSize(0.05)
+        datasHP[0].GetYaxis().SetTitleSize(0.06)
+
         if var.find("ALPHA1")!=-1: datasHP[0].GetYaxis().SetRangeUser(0., 4.)
         if var.find("ALPHA2")!=-1: datasHP[0].GetYaxis().SetRangeUser(0., 20.)
-        if var.find("SIGMA")!=-1:  datasHP[0].GetYaxis().SetRangeUser(0., 400.)
-        if var.find("MEAN")!=-1:   datasHP[0].GetYaxis().SetRangeUser(700., 8000)
+        if var.find("SIGMA")!=-1:  datasHP[0].GetYaxis().SetRangeUser(0., .4); datasHP[0].GetYaxis().SetTitle("m_{jj} "+var+" [TeV]")
+        if var.find("MEAN")!=-1:   datasHP[0].GetYaxis().SetRangeUser(1.25,8.05); datasHP[0].GetYaxis().SetTitle("m_{jj} "+var+" [TeV]")
         if var.find("N1")!=-1:     datasHP[0].GetYaxis().SetRangeUser(0., 15.)
         if var.find("N2")!=-1:     datasHP[0].GetYaxis().SetRangeUser(0., 150.)
 
