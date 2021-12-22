@@ -48,6 +48,36 @@ class AllFunctions():
    cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixPars["NP"]["pol"])
    os.system(cmd)
 
+ def makeSignalShapesMVV_cat(self,filename,template,fixParsMVV,addcuts="1"):
+  for cat in self.categories:
+   if 'VBF' in template: cut='*'.join([self.cuts['common_VBF'],self.cuts['acceptanceMJ'],self.cuts[cat],addcuts])
+   else: cut='*'.join([self.cuts['common_VV'],self.cuts['acceptanceMJ'],self.cuts[cat],addcuts])
+   ##the parameters to be fixed should be optimized
+   rootFile=filename+"_MVV_"+cat+".root"
+   fixPars = fixParsMVV["fixPars"]
+   cmd='vvMakeSignalMVVShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_LV_mass" --fix "{fixPars}"   -m {minMVV} -M {maxMVV} --minMX {minMX} --maxMX {maxMX} {samples} --addcut "{addcut}"  '.format(template=template,cut=cut,rootFile=rootFile,minMVV=self.minMVV,maxMVV=self.maxMVV,minMX=self.minMX,maxMX=self.maxMX,fixPars=fixPars,samples=self.samples,addcut=addcuts,binsMVV=self.HCALbinsMVV)
+   print cmd
+   os.system(cmd)
+   jsonFile=filename+"_MVV_"+cat+".json"
+   cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixParsMVV["pol"])
+   print "########## Going to make json ######"
+   print cmd
+   os.system(cmd)
+
+
+ def makeSignalShapesMJ_cat(self,filename,template,leg,fixPars,addcuts="1"):
+  for cat in self.categories:
+   cut = '*'.join([self.cuts['common'],addcuts,self.cuts[cat]])
+
+   rootFile=filename+"_MJ"+leg+"_"+cat+".root"
+   cmd='vvMakeSignalMJShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_{leg}_softDrop_mass" -m {minMJ} -M {maxMJ} -f "{fixPars}" --minMX {minMX} --maxMX {maxMX} {samples} '.format(template=template,cut=cut,rootFile=rootFile,leg=leg,minMJ=self.minMJ,maxMJ=self.maxMJ,minMX=self.minMX,maxMX=self.maxMX,fixPars=fixPars["NP"]["fixPars"],samples=self.samples)
+   os.system(cmd)
+
+   jsonFile=filename+"_MJ"+leg+"_"+cat+".json"
+   cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixPars["NP"]["pol"])
+   os.system(cmd)
+
+
  def makeSignalYields(self,filename,template,branchingFraction,functype="pol5",doTau=False):
   
   for c in self.categories:
