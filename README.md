@@ -185,7 +185,7 @@ For this step the script `run_transferKernel.sh` can be used. Inside the script 
 **NB: usually all script excpet the inputs to be in a `results_period` directory**
 * A special treatment is need to obtain the correct ttbar normalization that will be given as input to the postifits and limits with all workspaces
 
-Produce pseudodata with ttbar only, make a workspace and run postfits-> this will produce a json file with the ttbar normalizations. The postfit should be run on one category at the time.
+Produce pseudodata with ttbar only, make a workspace and run postfits-> this will produce a json file with the ttbar normalizations. The postfit should be run on one category at the time. Use the option `-i` to specify the files location if different from the default `results_Run2`.
 ```
 python makeInputs.py -p 2016 --run "pseudoTT" 
 python makeCard.py -p "2016,2017,2018" --signal "BulkGWW" -c "VH_HPLP" --outlabel "_ttbar" --pseudodata "ttbar"
