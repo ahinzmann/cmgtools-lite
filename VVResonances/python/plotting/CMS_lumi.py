@@ -6,7 +6,7 @@ class CMSPlotLabel:
         self.cmsTextFont=61
         self.extraText=extraText
         self.extraTextFont=52
-        self.lumiTextSize=0.4
+        self.lumiTextSize=0.6
         self.lumiTextOffset=0.2
         self.cmsTextSize=0.6
         self.cmsTextOffset=0.1
