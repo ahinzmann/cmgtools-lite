@@ -14,7 +14,6 @@ filesWW = []
 signalinuse="ZprimeZH"
 year='2018'
 tt_templ='TT_Mtt'
-if year !='2016': tt_templ='TTToHadronic'
 directory='deepAK8V2/'+year
 for f in os.listdir(directory):
  if 'QCD_Pt_' in f and '.root' in f: files.append(f)
@@ -31,13 +30,14 @@ print files
 print filesBKG
 print filesZH
 if year == '2016':
+ tag= '16'
  lumi = 35900.
 if year == '2018':
  lumi =  59740.
-
+ tag = '18'
 
 minMVV = 1126.
-maxMVV = 5500.
+maxMVV = 7600.
 minMJ=55.0
 maxMJ=215.0
 
@@ -52,19 +52,19 @@ cat['LP1'] = '(jj_l1_tau2/jj_l1_tau1+(0.080*TMath::Log((jj_l1_softDrop_mass*jj_l
 cat['LP2'] = '(jj_l2_tau2/jj_l2_tau1+(0.080*TMath::Log((jj_l2_softDrop_mass*jj_l2_softDrop_mass)/jj_l2_pt)))>0.43&&(jj_l2_tau2/jj_l2_tau1+(0.080*TMath::Log((jj_l2_softDrop_mass*jj_l2_softDrop_mass)/jj_l2_pt)))<0.79'
 '''
 
-catVtag['HP1'] = '(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p05_default_16)'																			
-catVtag['HP2'] = '(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p05_default_16)'																			
-catVtag['LP1'] = '((jj_l1_DeepBoosted_WvsQCD<jj_l1_DeepBoosted_WvsQCD__0p05_default_16)&&(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p10_default_16))'     
-catVtag['LP2'] = '((jj_l2_DeepBoosted_WvsQCD<jj_l2_DeepBoosted_WvsQCD__0p05_default_16)&&(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p10_default_16))'	    
-catVtag['NP1'] = '((jj_l1_DeepBoosted_WvsQCD<jj_l1_DeepBoosted_WvsQCD__0p15_default_16)&&(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p50_default_16))'
-catVtag['NP2'] = '((jj_l2_DeepBoosted_WvsQCD<jj_l2_DeepBoosted_WvsQCD__0p15_default_16)&&(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p50_default_16))'
+catVtag['HP1'] = '(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p05_default_'+tag+')'
+catVtag['HP2'] = '(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p05_default_'+tag+')'
+catVtag['LP1'] = '((jj_l1_DeepBoosted_WvsQCD<jj_l1_DeepBoosted_WvsQCD__0p05_default_'+tag+')&&(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p10_default_'+tag+'))'
+catVtag['LP2'] = '((jj_l2_DeepBoosted_WvsQCD<jj_l2_DeepBoosted_WvsQCD__0p05_default_'+tag+')&&(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p10_default_'+tag+'))'
+catVtag['NP1'] = '(jj_l1_DeepBoosted_WvsQCD<jj_l1_DeepBoosted_WvsQCD__0p10_default_'+tag+')' #&&(jj_l1_DeepBoosted_WvsQCD>jj_l1_DeepBoosted_WvsQCD__0p50_default_'+tag+'))'
+catVtag['NP2'] = '(jj_l2_DeepBoosted_WvsQCD<jj_l2_DeepBoosted_WvsQCD__0p10_default_'+tag+')' #&&(jj_l2_DeepBoosted_WvsQCD>jj_l2_DeepBoosted_WvsQCD__0p50_default_'+tag+'))'
 
-catHtag['HP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p02_default_16)' 
-catHtag['HP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p02_default_16)' 
-catHtag['LP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD<jj_l1_DeepBoosted_ZHbbvsQCD__0p02_default_16&&jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p10_default_16)' 
-catHtag['LP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD<jj_l2_DeepBoosted_ZHbbvsQCD__0p02_default_16&&jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p10_default_16)'
-catHtag['NP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD<jj_l1_DeepBoosted_ZHbbvsQCD__0p10_default_16&&jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p30_default_16)' 
-catHtag['NP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD<jj_l2_DeepBoosted_ZHbbvsQCD__0p10_default_16&&jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p30_default_16)' 
+catHtag['HP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p02_default_'+tag+')'
+catHtag['HP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p02_default_'+tag+')'
+catHtag['LP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD<jj_l1_DeepBoosted_ZHbbvsQCD__0p02_default_'+tag+'&&jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p10_default_'+tag+')'
+catHtag['LP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD<jj_l2_DeepBoosted_ZHbbvsQCD__0p02_default_'+tag+'&&jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p10_default_'+tag+')'
+catHtag['NP1'] = '(jj_l1_DeepBoosted_ZHbbvsQCD<jj_l1_DeepBoosted_ZHbbvsQCD__0p10_default_'+tag+'&&jj_l1_DeepBoosted_ZHbbvsQCD>jj_l1_DeepBoosted_ZHbbvsQCD__0p30_default_'+tag+')'
+catHtag['NP2'] = '(jj_l2_DeepBoosted_ZHbbvsQCD<jj_l2_DeepBoosted_ZHbbvsQCD__0p10_default_'+tag+'&&jj_l2_DeepBoosted_ZHbbvsQCD>jj_l2_DeepBoosted_ZHbbvsQCD__0p30_default_'+tag+')'
 
 
 cuts={}
@@ -105,7 +105,21 @@ cuts['VV_all'] =  '('+  '||'.join([cuts['VV_HPHP'],cuts['VV_HPLP']]) + ')'
 #all categories
 cuts['VV_VH']= '('+  '||'.join([cuts['VH_all'],cuts['VV_HPHP'],cuts['VV_HPLP']]) + ')'
 
+cut_tagger_1 = '('+'&&'.join([catVtag['HP1'],catVtag['NP2']])+')'
+cut_tagger_2 = '('+'&&'.join([catVtag['HP2'],catVtag['NP1']])+')'
+cuts['VV_HPNP_control_region'] = '('+'('+'||'.join([cut_tagger_1,cut_tagger_2])+')'+'&&'+'('+'!'+cuts['VH_all']+')'+')' 
 
+
+lp_cut_1 = catVtag['LP1']
+lp_cut_1 = lp_cut_1.replace('0p05','0p15').replace('0p10','0p50')
+lp_cut_2 = catVtag['LP2']
+lp_cut_2 = lp_cut_2.replace('0p05','0p15').replace('0p10','0p50')
+cut_tagger_1h = '('+'&&'.join([catHtag['HP1'],lp_cut_2])+')'
+cut_tagger_2h = '('+'&&'.join([catHtag['HP2'],lp_cut_1])+')'
+cuts['VH_NPHP_control_region'] = '('+'('+'||'.join([cut_tagger_1h,cut_tagger_2h])+')'+'&&'+'('+'!'+cuts['VV_VH']+')'+')'
+
+
+'''
 #control region (invert w-tag)                                                                                                                                                                                                
 catsAll['VH_NPHP'] = '('+'&&'.join([catVtag['NP1'],catHtag['HP2']])+')'
 catsAll['HV_HPNP'] = '('+'&&'.join([catHtag['HP1'],catVtag['NP2']])+')'
@@ -116,20 +130,14 @@ cuts['VH_NPHP_control_region'] = '('+'('+'||'.join([catsAll['VH_NPHP'],catsAll['
 catsAll['VH_HPNP'] = '('+'&&'.join([catVtag['HP1'],catHtag['NP2']])+')'
 catsAll['HV_NPHP'] = '('+'&&'.join([catHtag['NP1'],catVtag['HP2']])+')'
 cuts['VH_HPNP_control_region'] = '('+'('+'||'.join([catsAll['VH_HPNP'],catsAll['HV_NPHP']])+')'+'&&'+'('+'!'+'('+ '||'.join([cuts['VV_all'],cuts['VH_NPHP_control_region']]) +')'+')'+')'
-
+'''
 
 
 #################### FOR S/B ################
 if doSoverB:
  files_sig = filesZH
- #categories = ["VV_HPHP","VH_HPHP","VV_VH"] #,'VH_HPNP_control_region',"VH_NPHP_control_region"]
- categories = ["VV_VH"] #,'VH_HPNP_control_region',"VH_NPHP_control_region"]
-# categories = ['VH_HPNP_control_region',"VH_NPHP_control_region"]
- #mass=1600
- #masses = [3000]
- masses = [1200,2500,4000]
- #masses = [mass] #,4000]
-
+ categories = ["VV_HPHP","VH_HPHP","VV_VH"] #,'VH_HPNP_control_region',"VH_NPHP_control_region"]
+ masses = [1600,4000]
 
  for whichCat in categories :
   print " *******    ",whichCat , " *******    "
@@ -138,9 +146,6 @@ if doSoverB:
   outfile = open("signal_"+signalinuse+"_overAllB_"+whichCat+"_"+year+".txt","w")
   outfile.write("*** "+whichCat+"\n")
  
- 
-
-
   eff = 0.
   num = 0.
   den = 0.
@@ -259,7 +264,7 @@ if doSoverB:
    print "----> Final S/B for mass",m," - cat.",whichCat,":",numSigInteg[m]/hrate[m].Integral()
 
 
- outfile.close()  
+  outfile.close()
 
 #################### FOR MISTAG RATE ################
 whichCat = 'VH_HPHP'
