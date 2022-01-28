@@ -127,7 +127,7 @@ parser = optparse.OptionParser()
 
 parser.add_option("-v","--var",dest="var",help="mVV or mJ",default='mVV')
 parser.add_option("-l","--leg",dest="leg",help="l1 or l2",default='l1')
-parser.add_option("-p","--period",dest="period",help="2016 or 2017 or 2018",default='2016')
+parser.add_option("-p","--period",dest="period",help="2016 or 2017 or 2018 or Run2",default='Run2')
 parser.add_option("-c","--category",dest="category",help="VV_HPHP or VV_HPLP or VH_HPHP etc",default='VV_HPLP')
 parser.add_option("-s","--signal",dest="signal",help="signal",default='BulkGWW')
 parser.add_option("-f","--folder",dest="folder",help="input directory",default='')
@@ -939,24 +939,12 @@ def doAllOldCompare(signal,legend,colorindex):
     # sleep(1000)
                 
 if __name__ == '__main__':
-#    doSingle() #NB: some fix would be needed here!
-#    signals = ["BulkGZZ","WprimeWZ","BulkGWW","ZprimeWW","ZprimeZH","WprimeWH"]
-#    legs = ["G_{bulk} #rightarrow ZZ","W' #rightarrow WZ","G_{bulk} #rightarrow WW","Z'#rightarrow WW","Z'#rightarrow ZH","W'#rightarrow WH"]                                               
-#    signals = ["BulkGWW","ZprimeZH"]
-#    legs = ["G_{bulk} #rightarrow WW","Z'#rightarrow ZH"]                                                                                                                                                     
-#    signals = ["ZprimeZH"]
-#    legs = ["Z'#rightarrow ZH"]                                                                                                                                                     
-
-
-    signals = ["BulkGWW"] 
-    legs = ["G_{bulk} #rightarrow WW"] 
+    signals = ["BulkGZZ","WprimeWZ","BulkGWW","ZprimeWW","ZprimeZH","WprimeWH"]
+    legs = ["G_{bulk} #rightarrow ZZ","W' #rightarrow WZ","G_{bulk} #rightarrow WW","Z'#rightarrow WW","Z'#rightarrow ZH","W'#rightarrow WH"]
     
     for i in range(len(signals)):
-#    for i in range(1):
       print i
       print signals[i]
       print legs[i]
-#      doAllOld(signals[i],legs[i],i)
-#      doAllOldCompare(signals[i],legs[i],i)
       doAll(signals[i],legs[i],i)
-#      doAllTestVHLPLP(signals[i],legs[i],i)
+

@@ -46,6 +46,31 @@ if options.wtd.find("pseudo")!= -1 :
     data.Write()
     nonRes.Write("nonRes")
 
+if options.wtd.find("dib")!= -1 :
+    print "####        rebinning pseudo data "
+    pseudo1 = "JJ_"+str(period)+"_PDWZ_"+str(purity)+".root"
+    pseudo2 = "JJ_"+str(period)+"_PDZZ_"+str(purity)+".root"
+
+    r_file1 = ROOT.TFile(str(options.indir)+pseudo1,"READ")
+    data = r_file1.Get("data")
+    r_file2 = ROOT.TFile(str(options.indir)+pseudo2,"READ")
+    data2 = r_file2.Get("data")
+
+
+    data.Add(data2)
+
+    print data.GetXaxis().GetNbins()
+
+    data.RebinX(rebin)
+
+    print data.GetXaxis().GetNbins()
+
+    data.RebinY(rebin)
+
+
+    r_file_out = ROOT.TFile(str(options.outdir)+pseudo1.replace("WZ","DIB"),"RECREATE")
+    data.Write()
+
 if options.wtd.find("tt")!= -1 :
     print "####        rebinning ttbar pseudo data "
     pseudo = "JJ_"+str(period)+"_PDTT_"+str(purity)+".root"

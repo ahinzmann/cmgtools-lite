@@ -14,7 +14,7 @@ dataTemplate="JetHT"
 dirs=["2016/","2017/","2018/"]
 outputvariables= {}
 yeartag = {"2016/":"16","2017/":"17","2018/":"18"}
-jsonfile="excess_kinematic_new.json"
+jsonfile="excess_kinematic_muf0p3.json"
 
 mjjCut='(jj_LV_mass>2500.&&jj_LV_mass< 3000.)'
 mjet1Cut='(jj_l1_softDrop_mass>65.&&jj_l1_softDrop_mass<105.)'
@@ -105,6 +105,14 @@ for directory in dirs:
                     outputvariables[filename][i]['jj_l2_DeepBoosted_WvsQCD__0p05_MD_default_%s'%year]=tree.GetV2()[0]
                     outputvariables[filename][i]['jj_l1_DeepBoosted_WvsQCD__0p05_default_%s'%year]=tree.GetV3()[0]
                     outputvariables[filename][i]['jj_l2_DeepBoosted_WvsQCD__0p05_default_%s'%year]=tree.GetV4()[0]
+                    tree.Draw("met_pt:met_eta:met_phi:met_mass","evt==%d&&jj_LV_mass>2500."%chosenevent,"goff")
+                    outputvariables[filename][i]['met_pt']=tree.GetV1()[0]
+                    outputvariables[filename][i]['met_eta']=tree.GetV2()[0]
+                    outputvariables[filename][i]['met_phi']=tree.GetV3()[0]
+                    outputvariables[filename][i]['met_mass']=tree.GetV4()[0]
+                    tree.Draw("met_sumEt:met_pt/met_sumEt","evt==%d&&jj_LV_mass>2500."%chosenevent,"goff")
+                    outputvariables[filename][i]['met_sumEt']=tree.GetV1()[0]
+                    outputvariables[filename][i]['met_over_sumEt']=tree.GetV2()[0]
                     '''
                     tree.Draw("vbf_jj_l1_nhf:vbf_jj_l2_nhf:vbf_jj_l1_nef:vbf_jj_l2_nef","evt==%d&&jj_LV_mass>2500."%chosenevent,"goff")
                     outputvariables[filename][i]['vbf_jj_l1_nhf']=tree.GetV1()[0]
