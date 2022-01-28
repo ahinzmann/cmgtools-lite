@@ -1,4 +1,4 @@
-from tools.DatacardTools import *
+from tools.DatacardToolsAdditionalTests import *
 import sys,os
 import ROOT
 import json

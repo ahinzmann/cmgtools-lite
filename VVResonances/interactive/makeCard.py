@@ -17,7 +17,7 @@ import cuts
 # python makeCard.py -p "2016" --signal "BulkGWW" -c "VH_NPHP_control_region,VH_HPNP_control_region" --outlabel "_data" --pseudodata "False"
 
 parser = OptionParser()
-parser.add_option("-p","--period",dest="period",default="2016,2017",help="run period")
+parser.add_option("-p","--period",dest="period",default="2016,2017,2018",help="run period")
 parser.add_option("--pseudodata",dest="pseudodata",help="make cards with real data(False option) or differen pseudodata sets: Vjets, ZprimeZH etc",default='')
 parser.add_option("--signal",dest="signal",default="BulkGWW,BulkGZZ,ZprimeWW,ZprimeZH,WprimeWH,WprimeWZ",help="which signal do you want to run? options are BulkGWW, BulkGZZ, WprimeWZ, ZprimeWW, ZprimeZH")
 parser.add_option("--outlabel",dest="outlabel",help="lebel for output workspaces for example sigonly_M4500",default='')
@@ -36,6 +36,7 @@ parser.add_option("--kfactors",dest="kfactors",help="use combination of kfactors
 parser.add_option("--rescale",dest="rescale",help="use the rescale option if you want to rescale the QCD after having performed a preliminary postfit.",action='store_true')
 parser.add_option("--corrvbf",dest="corrvbf",help="correlate VBF cat with non VBF cat + 1 nuisance for all VBF for QCD and V+jets",action='store_true',default=False)
 parser.add_option("--peryear",dest="peryear",help="divide tagger eff per year",action='store_false',default=True) #this may look counter intuitive, but it is modified to have the chosen option as default for safety
+parser.add_option("--dib",dest="dib",help="add diboson bkg?",action='store_true',default=False)
 (options,args) = parser.parse_args()
 
 
@@ -64,7 +65,12 @@ print "signals ",signals
 doVjets= True
 rescale = False
 sf_qcd=1.8
-sf_vjets=1.
+sf_Wjets=1.
+sf_Zjets=1.
+
+print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+print "% sf_qcd= "+str(sf_qcd)+" - sf_Wjets= "+str(sf_Wjets)+" - sf_Zjets= "+str(sf_Zjets)
+print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 
 if outlabel.find("sigonly")!=-1 or outlabel.find("qcdonly")!=-1: doVjets = False
 if outlabel.find("sigonly")!=-1 or outlabel.find("Vjetsonly")!=-1: sf_qcd = 0.00001
@@ -109,7 +115,7 @@ print "datasets ",datasets
 print "result dir ",resultsDir
 
 doCorrelation = True 
-Tools = DatacardTools(scales,scalesHiggs,vtag_pt_dependence,PU_unc,JES_unc,JER_unc,lumi_unc,PDF_unc,sf_qcd,pseudodata,outlabel,doCorrelation,options.fitvjetsmjj,options.kfactors,sf_vjets)
+Tools = DatacardTools(scales,scalesHiggs,vtag_pt_dependence,PU_unc,JES_unc,JER_unc,lumi_unc,PDF_unc,sf_qcd,pseudodata,outlabel,doCorrelation,options.fitvjetsmjj,options.kfactors,sf_Wjets,sf_Zjets,options.dib)
 
 
 for sig in signals:
@@ -163,7 +169,6 @@ for sig in signals:
         print "##########################       including tt+jets in datacard      ######################"
         contrib =["resT","resW","nonresT","resTnonresT","resWnonresT","resTresW"]
         rootFileMVV = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_'+shape_purity+'.root' for ttcon in contrib}
-        #rootFileMVV = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_NP.root' for ttcon in contrib}
         rootFileNorm = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_'+p+'.root' for ttcon in contrib}
         jsonfileNorm = resultsDir[dataset]+'/'+options.jsonname+'_'+dataset+'_'+p+'.json'
         if options.fitTTmjj == True:
@@ -172,22 +177,27 @@ for sig in signals:
         else:
           print "load templates"
           Tools.AddTTBackground4(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib,jsonfileNorm)
-          #rootFileMVV  = resultsDir[dataset]+'/JJ_'+dataset+'_TTJets_MVV_'+p+'.root'
-          #rootFileNorm = resultsDir[dataset]+'/JJ_'+dataset+'_TTJets_'+p+'.root'
-          #Tools.AddTTBackground2(card,dataset,p,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
-          #ncontrib+=1 --> with old implementation
-          ncontrib+=6 #--> with new implementation
-          #ncontrib+=3 #--> with new implementation
+          ncontrib+=6
       else:
         print "########^^^^^^^^^^^^^^ NOT ADDING TTBAR!!!!! ^^^^^^^^^^^^^########################"
 
+      if options.dib == True:
+        print "##########################       including WZ and ZZ in datacard      ######################"
+        rootFileNorm = resultsDir[dataset]+'/JJ_%s_WZJets_%s.root'%(dataset,p)
+        rootFileMVV = resultsDir[dataset]+'/JJ_%s_WZ_MVV_'%dataset+'NP.root'
+        Tools.AddWZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
+        ncontrib+=1
+
+        rootFileNorm = resultsDir[dataset]+"/JJ_%s_ZZJets_%s.root"%(dataset,p)
+        rootFileMVV = resultsDir[dataset]+'/JJ_%s_ZZ_MVV_'%dataset+'NP.root'
+        Tools.AddZZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
+        ncontrib+=1
+
+
       print "##########################       including QCD in datacard      ######################"
-      #rootFile3DPDF = resultsDir[dataset]+'/JJ_2016_nonRes_3D_VV_HPLP.root'
-      rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_pythia_{purity}_3D.root".format(year=dataset,purity=shape_purity)#    save_new_shapes_%s_pythia_"%dataset+"_""VVVH_all"+"_3D.root"
-      #rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_madgraph_{purity}_3D.root".format(year=dataset,purity=p)#    save_new_shapes_%s_pythia_"%dataset+"_""VVVH_all"+"_3D.root"
+      rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_pythia_{purity}_3D.root".format(year=dataset,purity=shape_purity)
       print "rootFile3DPDF ",rootFile3DPDF
       rootFileNorm = resultsDir[dataset]+"/JJ_%s_nonRes_"%dataset+p+".root"
-      #rootFileNorm = resultsDir[dataset]+"/JJ_%s_nonRes_"%dataset+p+"_altshape2.root"
       print "rootFileNorm ",rootFileNorm
 
       Tools.AddNonResBackground(card,dataset,shape_purity,rootFile3DPDF,rootFileNorm,ncontrib,options.rescale,options.inputdir)
@@ -203,7 +213,6 @@ for sig in signals:
       elif pseudodata=="True":
         print "Using pseudodata with all backgrounds (QCD, V+jets and tt+jets)"
         rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_PDALL_"+p+".root"
-        #rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_PDALL_"+p+"_mad.root"
         histName="data"
         scaleData=1.0
       elif pseudodata=="ttjets":
@@ -230,6 +239,11 @@ for sig in signals:
        rootFileData = resultsDir[dataset]+"/pseudodata_sigOnly_"+dataset+"_"+sig+"_"+p+"_"+"M"+outlabel.split("_M")[1]+".root"
        histName="data_obs" 
        scaleData=1.0
+      elif pseudodata=="dib":
+        print "Using pseudodata with only tt backgrounds"
+        rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_PDDIB_"+p+".root"
+        histName="data"
+        scaleData=1.0
       elif pseudodata=="False":
         rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_data_"+p+".root"
         if dataset == "Run2" or dataset == "1617" : rootFileData = resultsDir[dataset]+"/JJ_"+p+".root"
@@ -253,15 +267,18 @@ for sig in signals:
       Tools.AddNonResBackgroundSystematics(card,p,options.vbf,options.corrvbf)
       if options.tau==False and options.peryear==False:
         print " 1 tagger eff per full Run2 "
-        Tools.AddTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+dataset+'.json'],options.vv,options.four,dataset)
+        if options.dib == True: Tools.AddTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_WZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZZJets_'+dataset+'.json'],options.vv,options.four,dataset)
+        else: Tools.AddTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+dataset+'.json'],options.vv,options.four,dataset)
       elif options.peryear == True:
         years= options.period.split(",")
         for year in years:
           print " tagging eff per year!! "
           if oneSignal == True:
-            Tools.AddOneTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
+            if options.dib == True: Tools.AddOneTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_WZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZZJets_'+dataset+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
+            else: Tools.AddOneTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
           else:
-            Tools.AddMultiTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
+            if options.dib == True: Tools.AddMultiTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
+            else: Tools.AddMultiTaggingSystematics(card,sig,p,[resultsDir[dataset]+'/migrationunc_'+sig+'_'+year+'.json',resultsDir[dataset]+'/migrationunc_WJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_ZJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_TTJets_'+year+'.json',resultsDir[dataset]+'/migrationunc_WZJets_'+dataset+'.json',resultsDir[dataset]+'/migrationunc_ZZJets_'+dataset+'.json'],options.vv,options.four,year,lumi[year]/lumitot)
       else:
         print "!!!!!!!!@@@@@@@@                    using tau21!!!    @@@@@@@@@@@@@@@@@@@@@@"
         Tools.AddTauTaggingSystematics(card,sig,p,dataset)
