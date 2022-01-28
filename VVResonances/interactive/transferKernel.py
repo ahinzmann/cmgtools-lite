@@ -719,13 +719,11 @@ def makeNonResCard():
  print "Signal Added !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
  hname = 'histo'
  if options.sample!='pythia': hname+=('_'+options.sample)
- print " hname 1 ",hname 
  fin = ROOT.TFile.Open(options.pdfIn)
  if not fin.Get(hname):
   print "WARNING: histogram",hname,"NOT FOUND in file",options.pdfIn,". This is probably expected. Use instead histogram histo"
   hname = 'histo'
  fin.Close() 
- print " hname 2",hname
  print "adding shapes bkg"
  #card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf,'TurnOn:CMS_VV_JJ_nonRes_TurnOn_'+category_pdf],False,0)
  #card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf],False,0)
