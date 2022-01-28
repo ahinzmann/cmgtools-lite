@@ -21,7 +21,7 @@ mass=1500
 outputdir=prefit_data_SR_${signal}${mass}_${extralabel}_${period}_VplusH/
 mkdir ${outputdir}
 echo "############## make postfit for ##############"
-label=prefit_data_blindSR_${signal}${mass}_${extralabel}_${period}_VplusH_${c}
+label=prefit_data_SR_${signal}${mass}_${extralabel}_${period}_VplusH_${c}
 echo $label
 python runFitPlots_vjets_signal_bigcombo_splitRes.py -n ${inputdir}/workspace_JJ_${signal}_${ws}_13TeV_${period}_data${name}.root  -i  ${inputdir}/JJ_${period}_nonRes_${c}.root -M ${mass}  -o ${outputdir} --channel ${c} -l ${c} --doVjets --addTop --signalScaleF 0 -s  -x 65,140 -y 65,140 --proj z| tee ${label}.log
 

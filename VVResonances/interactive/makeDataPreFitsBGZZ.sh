@@ -1,8 +1,9 @@
-#bin/bash!
+#!bin/bash
 
 period=Run2
 inputdir=results_Run2/
 wsdir=results_Run2/
+#extralabel=afterpreapproval_newShapesFits
 extralabel=afterpreapproval_1000
 c=$1
 ws=VBF_VVVH
@@ -10,6 +11,9 @@ name=_${extralabel}
 
 signal=BulkGZZ
 mass=3000
+
+#signal=BulkGWW
+#mass=2000
 
 outputdir=prefit_data_SR_${signal}${mass}_${extralabel}_${period}_VV65-105/
 mkdir ${outputdir}
