@@ -12,7 +12,7 @@ ROOT.gROOT.ProcessLine(".x tdrstyle.cc");
 class Postfitplotter():
     logfile = ""
     options = None
-    colors = [ROOT.kGray+2,ROOT.kRed,ROOT.kBlue,ROOT.kMagenta,210,ROOT.kOrange,ROOT.kViolet,ROOT.kAzure,ROOT.kTeal,ROOT.kGreen,ROOT.kBlack,ROOT.kPink,ROOT.kMagenta]
+    colors = [ROOT.kGray+2,ROOT.kGreen+2,ROOT.kRed,ROOT.kBlue,ROOT.kMagenta,210,ROOT.kOrange,ROOT.kViolet,ROOT.kAzure,ROOT.kTeal,ROOT.kGreen,ROOT.kBlack,ROOT.kPink,ROOT.kMagenta]
     signalName = "BulkG"
     def __init__(self,optparser,logfile,signalName,backuplabel=""):
         print "initialize plotter"
@@ -176,11 +176,15 @@ class Postfitplotter():
             # nominal way of calculating pulls
             #The pull is defined as (Data-fit)/$\sigma$, with $\sigma=\sqrt{\sigma_\mathrm{data}^2-\sigma_\mathrm{fit}^2}$ for each bin to ensure a Gaussian pull-distribution, as defined in Ref.~\cite{CDF:AN5776}.
             if hpostfit.GetBinContent(i) <= hdata.GetBinContent(i):
-                if error_band !=0: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Abs(hdata.GetBinErrorUp(i))
-                else: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
+                if error_band !=0:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Abs(hdata.GetBinErrorUp(i))
+                else:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
             else:
-                if error_band!=0: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Sqrt(ROOT.TMath.Abs( pow(hdata.GetBinErrorUp(i),2) - pow(error_band.GetErrorYlow(i-1),2) ))
-                else: ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
+                if error_band!=0:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ ROOT.TMath.Sqrt(ROOT.TMath.Abs( pow(hdata.GetBinErrorUp(i),2) - pow(error_band.GetErrorYlow(i-1),2) ))
+                else:
+                    ypostfit = (hdata.GetBinContent(i) - hpostfit.GetBinContent(i))/ hdata.GetBinErrorUp(i)
 
             '''
             #Alternative way of calculating pulls with pvalue
@@ -652,33 +656,40 @@ class Postfitplotter():
         print "---------------------------------------------------------------------------------------"
 
         if len(histos)>1:
+            #QCD
             if axis == 'z':
                 histos[1]= self.fromGeVtoTeV(histos[1])
-                histos[2]= self.fromGeVtoTeV(histos[2])
-
             histos[1].SetLineColor(self.colors[1])
             histos[1].SetLineWidth(2)
-            
+
+            #V+jets
+            if axis == 'z':
+                histos[2]= self.fromGeVtoTeV(histos[2])
+                histos[3]= self.fromGeVtoTeV(histos[3])
+
             histos[2].SetLineColor(self.colors[2])
             histos[2].SetLineWidth(2)
             
-        
-            if self.options.addTop:
-                histos[3].SetLineColor(self.colors[3])
-                histos[3].SetLineWidth(2)
-                if axis == 'z':
-                    histos[3] =self.fromGeVtoTeV(histos[3])
+            histos[3].SetLineColor(self.colors[3])
+            histos[3].SetLineWidth(2)
 
-            if self.options.addDIB:
+            if self.options.addTop:
                 histos[4].SetLineColor(self.colors[4])
                 histos[4].SetLineWidth(2)
+                histos[4].SetLineStyle(3)
+                if axis == 'z':
+                    histos[4] =self.fromGeVtoTeV(histos[4])
+
+            if self.options.addDIB:
                 histos[5].SetLineColor(self.colors[5])
                 histos[5].SetLineWidth(2)
+                histos[6].SetLineColor(self.colors[6])
+                histos[6].SetLineWidth(2)
                 if axis == 'z':
-                    histos[4] = self.fromGeVtoTeV(histos[4])
-                    histos[5]= self.fromGeVtoTeV(histos[5])
-
-        for i in range(4,len(histos)):
+                    histos[5] = self.fromGeVtoTeV(histos[5])
+                    histos[6]= self.fromGeVtoTeV(histos[6])
+        #ttbar components
+        for i in range(5,len(histos)):
             histos[i].SetLineColor(self.colors[i])
             if axis == 'z':
                 histos[i] = self.fromGeVtoTeV(histos[i])
@@ -739,11 +750,13 @@ class Postfitplotter():
         histos[0].SetTitle("category  "+self.options.channel)
         histos[0].Draw("samehist")
         if len(histos)>1:
-            if self.options.addTop: histos[3].Draw("histsame")
-            histos[1].SetLineStyle(7)
-            histos[2].SetLineStyle(6)
+            if self.options.addTop: histos[4].Draw("histsame")
+            histos[1].SetLineStyle(2)
+            histos[2].SetLineStyle(7)
+            histos[3].SetLineStyle(6)
             if "ttbar" not in self.options.output: histos[1].Draw("histsame")
             if "ttbar" not in self.options.output: histos[2].Draw("histsame")
+            if "ttbar" not in self.options.output: histos[3].Draw("histsame")
         drawBox = False
         if self.options.blind == True and axis!='z' and ( xrange == '55,215' or yrange == '55,215') :
             drawBox = True
@@ -816,32 +829,35 @@ class Postfitplotter():
             syst_band_fit.Write("syst_band_fit")
 
         if len(histos)>1 and "ttbar" not in self.options.output:
-            leg.AddEntry(histos[1],"W+jets","l")  ; print "Wjets ", histos[1].Integral(); nevents["Wjets"] = histos[1].Integral()
-            histos[1].Write("Wjets")
-            leg.AddEntry(histos[2],"Z+jets","l")  ; print "Zjets ", histos[2].Integral(); nevents["Zjets"] = histos[2].Integral()
-            histos[2].Write("Zjets")
-        if len(histos)>2:
-            if self.options.addTop: leg.AddEntry(histos[3],"t#bar{t}","l"); print "all ttbar ", histos[3].Integral() ; nevents["TTbarall"] = histos[3].Integral()
-            histos[3].Write("TTbarall")
-            if len(histos)>6 and self.options.addDIB == False:
-                if self.options.addTop: leg.AddEntry(histos[6],"res Top","l") ; print "res top ", histos[6].Integral(); nevents["resT"] = histos[6].Integral()
-                histos[6].Write("TTbar_2resT")
-                if self.options.addTop: leg.AddEntry(histos[7],"res W","l") ; print "res W  ", histos[7].Integral() ; nevents["resW"] = histos[7].Integral()
-                histos[7].Write("TTbar_2resW")
-                if self.options.addTop: leg.AddEntry(histos[8],"nonres Top","l") ; print "nonres top ", histos[8].Integral() ; nevents["nonresT"] = histos[8].Integral()
-                histos[8].Write("TTbar_nonresonant")
-                if self.options.addTop: leg.AddEntry(histos[9],"nonres Top + res Top","l") ; print "resT nonres T ", histos[9].Integral() ; nevents["resTnonresT"] = histos[9].Integral()
-                histos[9].Write("TTbar_resTnonresT")
-                if self.options.addTop: leg.AddEntry(histos[10],"nonres Top + res W","l"); print "res W nonresT ", histos[10].Integral(); nevents["resWnonresT"] = histos[10].Integral()
-                histos[10].Write("TTbar_resWnonresT")
-                if self.options.addTop: leg.AddEntry(histos[11],"res T + res W","l") ; print "resW resT ", histos[11].Integral(); nevents["resTresW"] = histos[11].Integral()
-                histos[11].Write("TTbar_resTresW")
-        if len(histos)>3:
+            leg.AddEntry(histos[1],"Multijet","l")  ; print "nonRes ", histos[1].Integral(); nevents["nonRes"] = histos[1].Integral()
+            histos[1].Write("nonRes")
+            if self.options.addTop:
+                leg.AddEntry(histos[4],"t#bar{t}","l"); print "all ttbar ", histos[4].Integral() ; nevents["TTbarall"] = histos[4].Integral()
+                histos[4].Write("TTbarall")
+            leg.AddEntry(histos[2],"W+jets","l")  ; print "Wjets ", histos[2].Integral(); nevents["Wjets"] = histos[2].Integral()
+            histos[2].Write("Wjets")
+            leg.AddEntry(histos[3],"Z+jets","l")  ; print "Zjets ", histos[3].Integral(); nevents["Zjets"] = histos[3].Integral()
+            histos[3].Write("Zjets")
+        if len(histos)>2 and self.options.addTop:
+            if len(histos)>7 and self.options.addDIB == False:
+                if self.options.addTop: leg.AddEntry(histos[7],"res Top","l") ; print "res top ", histos[7].Integral(); nevents["resT"] = histos[7].Integral()
+                histos[7].Write("TTbar_2resT")
+                if self.options.addTop: leg.AddEntry(histos[8],"res W","l") ; print "res W  ", histos[8].Integral() ; nevents["resW"] = histos[8].Integral()
+                histos[8].Write("TTbar_2resW")
+                if self.options.addTop: leg.AddEntry(histos[9],"nonres Top","l") ; print "nonres top ", histos[9].Integral() ; nevents["nonresT"] = histos[9].Integral()
+                histos[9].Write("TTbar_nonresonant")
+                if self.options.addTop: leg.AddEntry(histos[10],"nonres Top + res Top","l") ; print "resT nonres T ", histos[10].Integral() ; nevents["resTnonresT"] = histos[10].Integral()
+                histos[10].Write("TTbar_resTnonresT")
+                if self.options.addTop: leg.AddEntry(histos[11],"nonres Top + res W","l"); print "res W nonresT ", histos[11].Integral(); nevents["resWnonresT"] = histos[11].Integral()
+                histos[11].Write("TTbar_resWnonresT")
+                if self.options.addTop: leg.AddEntry(histos[12],"res T + res W","l") ; print "resW resT ", histos[12].Integral(); nevents["resTresW"] = histos[12].Integral()
+                histos[12].Write("TTbar_resTresW")
+        if len(histos)>4:
             if self.options.addDIB:
-                leg.AddEntry(histos[4],"WZ","l"); print "WZ ", histos[4].Integral() ; nevents["WZ"] = histos[4].Integral()
-                leg.AddEntry(histos[5],"ZZ","l"); print "ZZ ", histos[5].Integral() ; nevents["ZZ"] = histos[5].Integral()
-                histos[4].Write("WZ")
-                histos[5].Write("ZZ")
+                leg.AddEntry(histos[5],"WZ","l"); print "WZ ", histos[5].Integral() ; nevents["WZ"] = histos[5].Integral()
+                leg.AddEntry(histos[6],"ZZ","l"); print "ZZ ", histos[6].Integral() ; nevents["ZZ"] = histos[6].Integral()
+                histos[5].Write("WZ")
+                histos[6].Write("ZZ")
 
         text = "G_{bulk} (%.1f TeV) #rightarrow WW"%(self.options.signalMass/1000.)
         if (self.options.signalMass%1000.)==0:
@@ -998,12 +1014,18 @@ class Postfitplotter():
         #frame.Draw()
         if self.logfile!="":
             self.calculateChi2ForSig(hdata,hsig,axis,self.logfile,"\n \n projection "+extra1+"  "+extra2+" \n")
-        if self.options.prelim==0:
-            print "save plot as ", self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".pdf" 
+        if self.options.prelim=="":
+            print "save plot as ", self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".pdf"
             c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".png")
             c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".pdf")
             c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".C")
             c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root")
+        elif self.options.prelim=="Supplementary":
+            print "save plot as ", self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_suppl.pdf"
+            c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_suppl.png")
+            c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_suppl.pdf")
+            c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_suppl.C")
+            c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_suppl.root")
         else:
             print "save plot as ",   self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_prelim.pdf"
             c.SaveAs(self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+"_prelim.png")
@@ -1372,6 +1394,7 @@ class Projection():
         print "htot_Wres integral" , self.htot_Wres.Integral()
         print "htot_WZ integral" , self.htot_WZ.Integral()
         self.hfinals.append(self.htot)
+        if self.htot_nonres!=None: self.hfinals.append(self.htot_nonres)
         if self.htot_Wres!=None: self.hfinals.append(self.htot_Wres)
         if self.htot_Zres!=None: self.hfinals.append(self.htot_Zres)
         if self.htot_TTJets!=None: self.hfinals.append(self.htot_TTJets)
