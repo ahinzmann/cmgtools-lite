@@ -565,59 +565,59 @@ class Postfitplotter():
             print "make Z projection"
             htitle = "Z-Proj. x : "+self.options.xrange+" y : "+self.options.yrange
             hhtitle = self.options.channel
-            xtitle = "Dijet invariant mass [TeV]"
+            xtitle = "m^{AK8}_{jj} [TeV]"
             ymin = 0.2
             ymax = max(hdata.GetMaximum()*5000,maxY*5000)
-            extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
+            extra1 = xrange.split(',')[0]+' < m^{AK8}_{jet1} < '+ xrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(xrange.split(',')) == 4:
-                extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'        #xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+                extra1 = 'Blind '+xhigh+' < m^{AK8}_{jet1} < '+xlow2+' GeV'        #xlow+' < m^{AK8}_{jet1} < '+xhigh+' & '+xlow2+' < m^{AK8}_{jet1} < '+xhigh2+' GeV'
+            extra2 = yrange.split(',')[0]+' < m^{AK8}_{jet2} < '+ yrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(yrange.split(',')) == 4:
-                extra2 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
+                extra2 = 'Blind '+yhigh+' < m^{AK8}_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m^{AK8}_{jet2} < '+yhigh+' & '+ylow2+' < m^{AK8}_{jet2} < '+yhigh2+' GeV'
             if both == True:
-                extra1 = str(round(float(xrange.split(',')[0])))+' < m_{jet1/2} < '+ str(round(float(xrange.split(',')[1])))+' GeV'
-                extra2 = str(round(float(yrange.split(',')[0])))+' < m_{jet2/1} < '+ str(round(float(yrange.split(',')[1])))+' GeV'
+                extra1 = str(round(float(xrange.split(',')[0])))+' < m^{AK8}_{jet1/2} < '+ str(round(float(xrange.split(',')[1])))+' GeV'
+                extra2 = str(round(float(yrange.split(',')[0])))+' < m^{AK8}_{jet2/1} < '+ str(round(float(yrange.split(',')[1])))+' GeV'
         elif axis=='x':
             print "make X projection"
             htitle = "X-Proj. y : "+self.options.yrange+" z : "+self.options.zrange
             hhtitle = self.options.channel
-            xtitle = " m_{jet1} [GeV]"
+            xtitle = " m^{AK8}_{jet1} [GeV]"
             ymin = 0.02
             ymax = hdata.GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
             if "VBF" in self.options.channel:
                 ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
-            extra1 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+            extra1 = yrange.split(',')[0]+' < m^{AK8}_{jet2} < '+ yrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(yrange.split(',')) == 4:
-                extra1 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra1 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
+                extra1 = 'Blind '+yhigh+' < m^{AK8}_{jet2} < '+ylow2+' GeV'  #extra1 = ylow+' < m^{AK8}_{jet2} < '+yhigh+' & '+ylow2+' < m^{AK8}_{jet2} < '+yhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m^{AK8}_{jj} < '+ zrange.split(',')[1]+' TeV'
         elif axis=='y':
             print "make Y projection"
             htitle = "Y-Proj. x : "+self.options.xrange+" z : "+self.options.zrange
             hhtitle = self.options.channel
-            xtitle = " m_{jet2} [GeV]"
+            xtitle = " m^{AK8}_{jet2} [GeV]"
             ymin = 0.02
             ymax = hdata.GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
             if "VBF" in self.options.channel:
                 ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
 
-            extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
+            extra1 = xrange.split(',')[0]+' < m^{AK8}_{jet1} < '+ xrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(xrange.split(',')) == 4:
-                extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
+                extra1 = 'Blind '+xhigh+' < m^{AK8}_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m^{AK8}_{jet1} < '+xhigh+' & '+xlow2+' < m^{AK8}_{jet1} < '+xhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m^{AK8}_{jj} < '+ zrange.split(',')[1]+' TeV'
         elif axis=='b':
             print "make X+Y projection"
             htitle = "XY-Proj. x : "+self.options.xrange+" y  : "+self.options.yrange+" z : "+self.options.zrange
             hhtitle = self.options.channel
-            xtitle = " m_{jet} [GeV]"
+            xtitle = " m^{AK8}_{jet} [GeV]"
             ymin = 0.02
             ymax = hdata.GetMaximum()*2.5#max(hdata.GetMaximum()*1.3,maxY*1.3)
             if "VBF" in self.options.channel:
                 ymax = (hdata.GetMaximum()+ROOT.TMath.Sqrt(hdata.GetMaximum())) *2.5
 
-            extra1 = xrange.split(',')[0]+' < m_{jet1,2} < '+ xrange.split(',')[1]+' GeV'
+            extra1 = xrange.split(',')[0]+' < m^{AK8}_{jet1,2} < '+ xrange.split(',')[1]+' GeV'
             if self.options.blind == True and len(xrange.split(',')) == 4:
-                extra1 = 'Blind '+xhigh+' < m_{jet} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' TeV'
+                extra1 = 'Blind '+xhigh+' < m^{AK8}_{jet} < '+xlow2+' GeV'  #extra1 = xlow+' < m^{AK8}_{jet1} < '+xhigh+' & '+xlow2+' < m^{AK8}_{jet1} < '+xhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m^{AK8}_{jj} < '+ zrange.split(',')[1]+' TeV'
 
 
                     
@@ -625,6 +625,8 @@ class Postfitplotter():
         #leg = ROOT.TLegend(0.55809045,0.3063636,0.7622613,0.8520979)
         leg = ROOT.TLegend(0.5,0.45,0.82,0.88)
         leg.SetTextSize(0.045)
+        leg.SetFillStyle(0)
+        leg.SetLineWidth(0)
         c = self.get_canvas('c')
         pad1 = self.get_pad("pad1") #ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
         if axis == 'z': pad1.SetLogy()
@@ -931,7 +933,7 @@ class Postfitplotter():
 
         #pt2 = ROOT.TPaveText(0.125,0.79,0.99,0.4,"NDC")
         #pt2 = ROOT.TPaveText(0.55,0.35,0.99,0.32,"NDC")
-        pt2 = ROOT.TPaveText(0.4,0.38,0.99,0.44,"NDC")
+        pt2 = ROOT.TPaveText(0.35,0.38,0.99,0.44,"NDC")
         pt2.SetTextFont(42)
         pt2.SetTextSize(0.04)
         pt2.SetTextAlign(12)
