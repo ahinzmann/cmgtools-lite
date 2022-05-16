@@ -98,7 +98,7 @@ parser.add_option("-k","--kernel",dest="kernel",help="File with kernel and histo
 parser.add_option("-o","--outdir",dest="outdir",help="Output directory for plots",default='control-plots')
 parser.add_option("-l","--label",dest="label",help="MC type label (Pythia8, Herwig, Madgraph, Powheg)",default='Pythia8')
 parser.add_option("-p","--period",dest="period",help="year or Run2",default='Run2')
-parser.add_option("--prelim",dest="prelim",help="which CMS labels?",default='prelim')
+parser.add_option("--prelim",dest="prelim",help="which CMS labels?",default='')
 (options,args) = parser.parse_args()
 
 prelim = options.prelim
@@ -226,6 +226,7 @@ hy[0].SetMinimum(0)
 hy[0].SetMaximum(0.06)
 #leg = rt.TLegend(0.6,0.6,0.85,0.8)
 leg = rt.TLegend(0.51,0.60,0.76,0.85)
+
 leg.SetBorderSize(0)
 leg.SetTextSize(0.035)
 leg.AddEntry(hxMC[0],"Simulation (%s)"%options.label,"LP")
@@ -260,7 +261,8 @@ for i in range(4):
  hx[i].Draw("HISTsame")
  hxMC[i].Draw("PEsame")
 #hx[0].GetXaxis().SetTitle("m_{jet1} (proj. x) [GeV]")
-hx[0].GetXaxis().SetTitle("m_{jet1} [GeV]") #cosmetic as in B2G-18-002
+#hx[0].GetXaxis().SetTitle("m_{jet1} [GeV]") #cosmetic as in B2G-18-002
+hx[0].GetXaxis().SetTitle("m_{jet1}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hx[0].GetYaxis().SetTitle("a.u.")
 leg.Draw()
 
@@ -269,6 +271,8 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(cx,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(cx,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(cx,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(cx,'sim',11)
 
@@ -295,6 +299,7 @@ hxMC_r[0].GetYaxis().SetRangeUser(0.,2.)
 hxMC_r[0].GetYaxis().SetNdivisions(5)
 #hxMC_r[0].GetXaxis().SetTitle("m_{jet1} (proj. x) [GeV]")
 hxMC_r[0].GetXaxis().SetTitle("m_{jet1} [GeV]") #cosmetic as in B2G-18-002
+hxMC_r[0].GetXaxis().SetTitle("m_{jet1}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hxMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
 
 linea =  rt.TLine(xmin,1.,xmax,1.);
@@ -334,7 +339,8 @@ pad2y.SetLeftMargin(0.15)
 pad2y.Draw()
 pad1y.cd()
 #hy[0].GetXaxis().SetTitle("m_{jet2} (proj. y) [GeV]")
-hy[0].GetXaxis().SetTitle("m_{jet2} [GeV]") #cosmetic as in B2G-18-002
+#hy[0].GetXaxis().SetTitle("m_{jet2} [GeV]") #cosmetic as in B2G-18-002
+hy[0].GetXaxis().SetTitle("m_{jet2}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hy[0].GetYaxis().SetTitle("a.u.")
 hy[0].GetXaxis().SetTitleSize(hx[0].GetXaxis().GetTitleSize())
 hy[0].GetXaxis().SetTitleOffset(hx[0].GetXaxis().GetTitleOffset())
@@ -347,6 +353,8 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(cy,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(cy,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(cy,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(cy,'sim',11)
 pad2y.cd()
@@ -368,7 +376,8 @@ hyMC_r[0].GetYaxis().SetLabelSize(0.11)
 hyMC_r[0].GetYaxis().SetRangeUser(0.,2.)
 hyMC_r[0].GetYaxis().SetNdivisions(5)
 #hyMC_r[0].GetXaxis().SetTitle("m_{jet2} (proj. y) [GeV]")
-hyMC_r[0].GetXaxis().SetTitle("m_{jet2} [GeV]") #cosmetic as in B2G-18-002
+#hyMC_r[0].GetXaxis().SetTitle("m_{jet2} [GeV]") #cosmetic as in B2G-18-002
+hyMC_r[0].GetXaxis().SetTitle("m_{jet2}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hyMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
 
 linea.Draw("same");
@@ -569,7 +578,8 @@ for i in range(6):
  hz[i].Draw("HISTsame")
  hzMC[i].Draw("PEsame")
 #hz[0].GetXaxis().SetTitle("m_{jj} (proj. z) [GeV]")
-hz[0].GetXaxis().SetTitle("Dijet invariant mass [GeV]") #cosmetic as in B2G-18-002
+#hz[0].GetXaxis().SetTitle("Dijet invariant mass [GeV]") #cosmetic as in B2G-18-002
+hz[0].GetXaxis().SetTitle("m_{jj}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hz[0].GetYaxis().SetTitle("a.u.")
 leg2.Draw()
 
@@ -577,6 +587,8 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(cz,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(cz,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(cz,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(cz,'sim',11)
 
@@ -600,6 +612,7 @@ hzMC_r[0].GetYaxis().SetRangeUser(0.,2.)
 hzMC_r[0].GetYaxis().SetNdivisions(5)
 #hzMC_r[0].GetXaxis().SetTitle("m_{jj} (proj. z) [GeV]")
 hzMC_r[0].GetXaxis().SetTitle("Dijet invariant mass [GeV]") #cosmetic as in B2G-18-002
+hzMC_r[0].GetXaxis().SetTitle("m_{jj}^{AK8} [GeV]") #cosmetic for B2G-20-009
 hzMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
 
 lineaz =  rt.TLine(zmin,1.,zmax,1.);
@@ -788,17 +801,18 @@ hz[0].Scale(1./hz[0].Integral())
 
 #leg3 = rt.TLegend(0.6,0.55,0.95,0.8)
 leg3 = rt.TLegend(0.43,0.55,0.78,0.89)
+if options.prelim.find("prelim")!=-1: leg3 = rt.TLegend(0.5,0.6,0.85,0.85)
 leg3.SetBorderSize(0)
-leg3.SetTextSize(0.035)
+leg3.SetTextSize(0.04)
 if prelim.find("thesis")==-1: leg3.AddEntry(hzMC[0],"Simulation (%s)"%(options.label),"EP")
 leg3.AddEntry(hz[0],"Template","L")
 
-leg3.AddEntry(hz_PTUp,"#propto m_{jj} up/down","L")
-leg3.AddEntry(hz_OPTUp,"#propto 1/m_{jj} up/down","L")
+leg3.AddEntry(hz_PTUp,"#propto m_{jj}^{AK8} up/down","L")
+leg3.AddEntry(hz_OPTUp,"#propto 1/m_{jj}^{AK8} up/down","L")
 leg3.AddEntry(hz_altshapeUp,"Herwig++ up/down","L")
 leg3.AddEntry(hz_altshape2Up,"MG+Pythia8 up/down","L")
 #leg3.AddEntry(hz_altshape3Up,"POWHEG up/down","L")
-leg3.AddEntry(hz_TurnOnUp,"m_{jj} turn-on up/down","L")
+leg3.AddEntry(hz_TurnOnUp,"m_{jj}^{AK8} turn-on up/down","L")
 '''
 leg3.AddEntry(hz_OPT3Up,"OPT3","L")
 leg3.AddEntry(hz_PT3Up," PT3","L")
@@ -854,17 +868,19 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(czSyst,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(czSyst,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(czSyst,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(czSyst,'sim',11)
 
-pt2 = rt.TPaveText(0.6,0.45,0.99,0.5,"NDC")
+pt2 = rt.TPaveText(0.43,0.48,0.99,0.53,"NDC")
 pt2.SetTextFont(42)
 pt2.SetTextSize(0.04)
 pt2.SetTextAlign(12)
 pt2.SetFillColor(0)
 pt2.SetBorderSize(0)
 pt2.SetFillStyle(0)
-pt2.AddText(options.outdir.split("-")[3].replace("_"," ")+" category")
+pt2.AddText("DY/gg "+options.outdir.split("-")[3].replace("_"," ")+" cat.")
 pt2.Draw()
 
 czSyst.cd()
@@ -971,16 +987,17 @@ hxMC[0].Scale(1./hxMC[0].Integral())
 hx[0].Scale(1./hx[0].Integral())
 #leg3 = rt.TLegend(0.6,0.55,0.95,0.8)
 leg3 = rt.TLegend(0.43,0.55,0.78,0.89)
+if options.prelim.find("prelim")!=-1: leg3 = rt.TLegend(0.5,0.6,0.85,0.85)
 leg3.SetBorderSize(0)
-leg3.SetTextSize(0.035)
+leg3.SetTextSize(0.04)
 if prelim.find("thesis")==-1: leg3.AddEntry(hxMC[0],"Simulation (%s)"%(options.label),"EP")
 leg3.AddEntry(hx[0],"Template","L")
-leg3.AddEntry(hx_PTUp,"#propto m_{jj} up/down","L")
-leg3.AddEntry(hx_OPTUp,"#propto 1/m_{jj} up/down","L")
+leg3.AddEntry(hx_PTUp,"#propto m_{jj}^{AK8} up/down","L")
+leg3.AddEntry(hx_OPTUp,"#propto 1/m_{jj}^{AK8} up/down","L")
 leg3.AddEntry(hx_altshapeUp,"Herwig++ up/down","L")
 leg3.AddEntry(hx_altshape2Up,"MG+Pythia8 up/down","L")
 #leg3.AddEntry(hx_altshape3Up,"POWHEG up/down","L")
-leg3.AddEntry(hx_TurnOnUp,"m_{jj} turn-on up/down","L")
+leg3.AddEntry(hx_TurnOnUp,"m_{jj}^{AK8} turn-on up/down","L")
 '''
 leg3.AddEntry(hx_OPT3Up,"OPT3","L")
 leg3.AddEntry(hx_PT3Up,"PT3","L")
@@ -1032,17 +1049,19 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(cxSyst,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(cxSyst,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(cxSyst,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(cxSyst,'sim',11)
 
-pt2 = rt.TPaveText(0.6,0.45,0.99,0.5,"NDC")
+pt2 = rt.TPaveText(0.43,0.48,0.99,0.53,"NDC")
 pt2.SetTextFont(42)
 pt2.SetTextSize(0.04)
 pt2.SetTextAlign(12)
 pt2.SetFillColor(0)
 pt2.SetBorderSize(0)
 pt2.SetFillStyle(0)
-pt2.AddText(options.outdir.split("-")[3].replace("_"," ")+" category")
+pt2.AddText("DY/gg "+options.outdir.split("-")[3].replace("_"," ")+" cat.")
 pt2.Draw()
 
 cxSyst.cd()
@@ -1123,17 +1142,19 @@ hy_OPT3Down.Scale(1./hy_OPT3Down.Integral())
 hyMC[0].Scale(1./hyMC[0].Integral())
 hy[0].Scale(1./hy[0].Integral())
 #leg3 = rt.TLegend(0.6,0.55,0.95,0.8)
-leg3 = rt.TLegend(0.43,0.50,0.78,0.84)
+#leg3 = rt.TLegend(0.43,0.50,0.78,0.84)
+leg3 = rt.TLegend(0.43,0.55,0.78,0.89)
+if options.prelim.find("prelim")!=-1: leg3 = rt.TLegend(0.5,0.6,0.85,0.85)
 leg3.SetBorderSize(0)
-leg3.SetTextSize(0.035)
+leg3.SetTextSize(0.04)
 if prelim.find("thesis")==-1: leg3.AddEntry(hyMC[0],"Simulation (%s)"%(options.label),"EP")
 leg3.AddEntry(hy[0],"Template","L")
-leg3.AddEntry(hy_PTUp,"#propto m_{jj} up/down","L")
-leg3.AddEntry(hy_OPTUp,"#propto 1/m_{jj} up/down","L")
+leg3.AddEntry(hy_PTUp,"#propto m_{jj}^{AK8} up/down","L")
+leg3.AddEntry(hy_OPTUp,"#propto 1/m_{jj}^{AK8} up/down","L")
 leg3.AddEntry(hy_altshapeUp,"Herwig++ up/down","L")
 leg3.AddEntry(hy_altshape2Up,"MG+Pythia8 up/down","L")
 #leg3.AddEntry(hy_altshape3Up,"POWHEG up/down","L")
-leg3.AddEntry(hy_TurnOnUp,"m_{jj} turn on up/down","L")
+leg3.AddEntry(hy_TurnOnUp,"m_{jj}^{AK8} turn on up/down","L")
 
 
 
@@ -1170,11 +1191,13 @@ if prelim.find("prelim")!=-1:
  CMS_lumi.cmslabel_sim_prelim(cySyst,'sim',11)
 elif prelim.find("thesis")!=-1:
  CMS_lumi.cmslabel_thesis(cySyst,'sim',0)
+elif prelim.find("suppl")!=-1:
+ CMS_lumi.cmslabel_sim_suppl(cySyst,'sim',0)
 else:
  CMS_lumi.cmslabel_sim(cySyst,'sim',11)
 
 
-pt2 = rt.TPaveText(0.6,0.45,0.99,0.5,"NDC")
+pt2 = rt.TPaveText(0.43,0.48,0.99,0.53,"NDC")
 pt2.SetTextFont(42)
 pt2.SetTextSize(0.04)
 pt2.SetTextAlign(12)
@@ -1182,7 +1205,7 @@ pt2.SetFillColor(0)
 pt2.SetBorderSize(0)
 pt2.SetFillStyle(0)
 
-pt2.AddText(options.outdir.split("-")[3].replace("_"," ")+" category")
+pt2.AddText("DY/gg "+options.outdir.split("-")[3].replace("_"," ")+" cat.")
 pt2.Draw()
 
 
