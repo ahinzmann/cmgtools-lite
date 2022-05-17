@@ -298,7 +298,7 @@ def Plot(categories,histos,axis,signal1=None,signal2=None):
         print "make Z projection"
         htitle = "Z-Proj. x : "+options.xrange+" y : "+options.yrange
         hhtitle = options.channel
-        xtitle = "Dijet invariant mass [TeV]"
+        xtitle = "m_{jj}^{AK8} [TeV]"
         ymin = 0.2
         ymax = histos[categories[0]]["Data"].GetMaximum()*5000
         extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
@@ -503,7 +503,7 @@ def Plot(categories,histos,axis,signal1=None,signal2=None):
     label = "VVcat"
     if "VH" in categories[0]: label="VHcat"
     elif signal1 != None: label="WithSig"+categpries[0]
-    if options.prelim==0:
+    if options.prelim=="":
         outputname= options.output+options.name+label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')
         print "save plot as ", outputname+".pdf"
     else:
@@ -568,42 +568,42 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1.1
         print "make Z projection"
         htitle = "Z-Proj. x : "+xrange+" y : "+yrange
         hhtitle = options.channel
-        xtitle = "Dijet invariant mass [TeV]"
+        xtitle = "m_{jj}^{AK8} [TeV]"
         ymin = -4
         ymax = 4
-        extra1 = xrange.split(',')[0]+' GeV < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
-        extra2 = yrange.split(',')[0]+' GeV < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+        extra1 = xrange.split(',')[0]+' < m_{jet1}^{AK8} < '+ xrange.split(',')[1]+' GeV'
+        extra2 = yrange.split(',')[0]+' < m_{jet2}^{AK8} < '+ yrange.split(',')[1]+' GeV'
         if xrange != yrange:
-            extra1 = xrange.split(',')[0]+' GeV < m_{jet1/2} < '+ xrange.split(',')[1]+' GeV'
-            extra2 = yrange.split(',')[0]+' GeV < m_{jet2/1} < '+ yrange.split(',')[1]+' GeV'
+            extra1 = xrange.split(',')[0]+' < m_{jet1/2}^{AK8} < '+ xrange.split(',')[1]+' GeV'
+            extra2 = yrange.split(',')[0]+' < m_{jet2/1}^{AK8} < '+ yrange.split(',')[1]+' GeV'
 
         if options.blind == True and len(xrange.split(',')) == 4:
-            extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'        #xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+            extra1 = 'Blind '+xhigh+' < m_{jet1}^{AK8} < '+xlow2+' GeV'        #xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
+            extra2 = yrange.split(',')[0]+' < m_{jet2}^{AK8} < '+ yrange.split(',')[1]+' GeV'
         if options.blind == True and len(yrange.split(',')) == 4:
-            extra2 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
+            extra2 = 'Blind '+yhigh+' < m_{jet2}^{AK8} < '+ylow2+' GeV'  #extra2 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
     elif axis=='x':
         print "make X projection"
         htitle = "X-Proj. y : "+options.yrange+" z : "+options.zrange
         hhtitle = options.channel
-        xtitle = " m_{jet1} [GeV]"
+        xtitle = " m_{jet1}^{AK8} [GeV]"
         ymin = 0.02
         ymax = histos[categories[0]]["Data"].GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
-        extra1 = yrange.split(',')[0]+' < m_{jet2} < '+ yrange.split(',')[1]+' GeV'
+        extra1 = yrange.split(',')[0]+' < m_{jet2}^{AK8} < '+ yrange.split(',')[1]+' GeV'
         if options.blind == True and len(yrange.split(',')) == 4:
-            extra1 = 'Blind '+yhigh+' < m_{jet2} < '+ylow2+' GeV'  #extra1 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' GeV'
+            extra1 = 'Blind '+yhigh+' < m_{jet2}^{AK8} < '+ylow2+' GeV'  #extra1 = ylow+' < m_{jet2} < '+yhigh+' & '+ylow2+' < m_{jet2} < '+yhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m_{jj}^{AK8} < '+ zrange.split(',')[1]+' GeV'
     elif axis=='y':
         print "make Y projection"
         htitle = "Y-Proj. x : "+options.xrange+" z : "+options.zrange
         hhtitle = options.channel
-        xtitle = " m_{jet2} [GeV]"
+        xtitle = " m_{jet2}^{AK8} [GeV]"
         ymin = 0.02
         ymax = histos[categories[0]]["Data"].GetMaximum()*2#max(hdata.GetMaximum()*1.3,maxY*1.3)
-        extra1 = xrange.split(',')[0]+' < m_{jet1} < '+ xrange.split(',')[1]+' GeV'
+        extra1 = xrange.split(',')[0]+' < m_{jet1}^{AK8} < '+ xrange.split(',')[1]+' GeV'
         if options.blind == True and len(xrange.split(',')) == 4:
-            extra1 = 'Blind '+xhigh+' < m_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
-            extra2 = zrange.split(',')[0]+' < m_{jj} < '+ zrange.split(',')[1]+' GeV'
+            extra1 = 'Blind '+xhigh+' < m_{jet1}^{AK8} < '+xlow2+' GeV'  #extra1 = xlow+' < m_{jet1} < '+xhigh+' & '+xlow2+' < m_{jet1} < '+xhigh2+' GeV'
+            extra2 = zrange.split(',')[0]+' < m_{jj}^{AK8} < '+ zrange.split(',')[1]+' GeV'
 
     c = get_canvas('c')
     c.SetBottomMargin(0.)
@@ -757,7 +757,12 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1.1
             histos[cat][syst_band].GetYaxis().SetTitleOffset(1.5)
             binwidth = histos[cat][syst_band].GetXaxis().GetBinWidth(10)
             if axis == "z": binwidth = 100
-            histos[cat][syst_band].GetYaxis().SetTitle(cat.replace("VBF_","").replace("_"," "))
+            ytitle=cat.replace("_"," ")
+            if "VBF" not in ytitle: 
+                ytitle = "#splitline{   DY/gg}{"+ytitle+"}"
+            else:
+                ytitle = "#splitline{    VBF}{"+ytitle.replace("VBF ","")+"}"
+            histos[cat][syst_band].GetYaxis().SetTitle(ytitle)
             histos[cat][syst_band].GetYaxis().SetTitleFont(43)
             histos[cat][syst_band].GetYaxis().SetTitleSize(18)
             histos[cat][syst_band].GetYaxis().CenterTitle()
@@ -853,7 +858,7 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1.1
     if "VBF" in categories[0]: label="VBFcat"
     if signal1 != None: label+="WithSig"+signal1
     if signal2 != None: label+="WithSig"+signal2
-    if options.prelim==0:
+    if options.prelim=="":
         outputname= options.output+options.name+label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')
         print "save plot as ", outputname+".pdf"
     else:
@@ -900,7 +905,7 @@ if __name__ == '__main__':
 
         data = "Data" #"Simulation"
 
-        dirlabel="paperpulls"
+        dirlabel=""
 
         # First plot: VV mass window, non VBF signal and categories
         signal1 = "BulkGWW"
@@ -923,10 +928,10 @@ if __name__ == '__main__':
             filename=options.input+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file = ROOT.TFile.Open(filename,"READ")
 
-            filename1="prefit_data_SR_VV_"+dirlabel+"_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename1="prefit_data_SR_VV_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file1 = ROOT.TFile.Open(filename1,"READ")
 
-            filename2="prefit_data_SR_VV_"+dirlabel+"_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename2="prefit_data_SR_VV_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file2 = ROOT.TFile.Open(filename2,"READ")
 
 
@@ -935,8 +940,8 @@ if __name__ == '__main__':
                 if histname == signal1: file_to_use = r_file1
                 if histname == signal2: file_to_use = r_file2
                 print file_to_use
-                GeVtoTeV = False
-                if histname == "pulls_stat": GeVtoTeV =True
+                GeVtoTeV = True
+                #if histname == "pulls_stat": GeVtoTeV =True
                 pulls[c][histname]= GetHist(file_to_use,histname,GeVtoTeV)
                 print " pulls[c][histname] ",pulls[c][histname]
                 if histname == signal1:
@@ -978,10 +983,10 @@ if __name__ == '__main__':
             filename=options.input+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file = ROOT.TFile.Open(filename,"READ")
 
-            filename1="prefit_data_SR_VorH_together_"+dirlabel+"_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename1="prefit_data_SR_VorH_together_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file1 = ROOT.TFile.Open(filename1,"READ")
 
-            filename2="prefit_data_SR_VorH_together_"+dirlabel+"_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename2="prefit_data_SR_VorH_together_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file2 = ROOT.TFile.Open(filename2,"READ")
 
             print " filename ",filename
@@ -990,8 +995,8 @@ if __name__ == '__main__':
                 if histname == signal1: file_to_use = r_file1
                 if histname == signal2: file_to_use = r_file2
                 print
-                GeVtoTeV = False
-                if histname == "pulls_stat": GeVtoTeV = True
+                GeVtoTeV = True
+                #if histname == "pulls_stat": GeVtoTeV = True
                 pulls[c][histname]= GetHist(file_to_use,histname,GeVtoTeV)
                 print " pulls[c][histname] ",pulls[c][histname]
                 if histname == signal1:
@@ -1033,10 +1038,10 @@ if __name__ == '__main__':
             filename=options.input.replace("BulkGWW",signal1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file = ROOT.TFile.Open(filename,"READ")
 
-            filename1="prefit_data_SR_VplusH_"+dirlabel+"_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename1="prefit_data_SR_VplusH_"+signal1+str(mass1)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file1 = ROOT.TFile.Open(filename1,"READ")
 
-            filename2="prefit_data_SR_VplusH_"+dirlabel+"_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
+            filename2="prefit_data_SR_VplusH_"+signal2+str(mass2)+"/Histos"+c+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root"
             r_file2 = ROOT.TFile.Open(filename2,"READ")
 
             print " filename ",filename
@@ -1045,8 +1050,8 @@ if __name__ == '__main__':
                 if histname == signal1: file_to_use = r_file1
                 if histname == signal2: file_to_use = r_file2
                 print
-                GeVtoTeV = False
-                if histname == "pulls_stat": GeVtoTeV =True
+                GeVtoTeV = True
+                #if histname == "pulls_stat": GeVtoTeV =True
                 pulls[c][histname]= GetHist(file_to_use,histname,GeVtoTeV)
                 print " pulls[c][histname] ",pulls[c][histname]
                 if histname == signal1:
