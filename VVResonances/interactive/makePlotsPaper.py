@@ -345,7 +345,7 @@ def Plot(categories,histos,axis,signal1=None,signal2=None):
 
     #pad1.Draw()
     #pad1.cd()
-    leg.SetLineColor(0)
+    leg.SetLineWidth(0)
 
     for cat in categories:
         for sample in histos[cat].keys():
@@ -610,20 +610,22 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1.1
 
     # Lots of math to have all pulls with the same height of the y-axis, taking into account that the last pad will need be larger to accomodate x-axis labels & title
     cat_usual = len(categories)-1.
-    ymin_pad0 = 0.85 #total lenght of the pull parts = cat_usual*usualstep + laststep
+    ymin_pad0 = 0.89 #total lenght of the pull parts = cat_usual*usualstep + laststep
     bottom_margin = 0.35
     usualstep = ymin_pad0*(1.-bottom_margin)/(cat_usual-cat_usual*bottom_margin+1.)
-    # laststep = usualstep+ bottom_margin*laststep
     laststep = usualstep/(1.-bottom_margin)
-    #leg = ROOT.TLegend(0.38,ymin_pad0+0.11,0.99,0.99)
-    leg = ROOT.TLegend(0.18,ymin_pad0+0.01,0.45,0.99)
+    leg = ROOT.TLegend(0.59,ymin_pad0+0.06,0.97,0.99) 
     leg.SetTextSize(0.033)
-    #leg.SetNColumns(2)
+    leg.SetNColumns(2)
     leg.SetMargin(0.12)
-    leg.SetColumnSeparation(0.05)
-    #legsig = ROOT.TLegend(0.48,ymin_pad0+0.001,0.8,ymin_pad0+0.10)
-    legsig = ROOT.TLegend(0.45,ymin_pad0+0.05,0.97,0.99)
+    leg.SetFillStyle(0)
+    leg.SetLineWidth(0)
+    leg.SetColumnSeparation(0.15)
+    legsig = ROOT.TLegend(0.12,ymin_pad0+0.03,0.45,0.99) 
     legsig.SetTextSize(0.033)
+    legsig.SetMargin(0.12)
+    legsig.SetFillStyle(0)
+    legsig.SetLineWidth(0)
 
     pad0 =  get_pad("legend",ymin_pad0,1.)
     pad0.SetLeftMargin(0.01)
@@ -672,8 +674,7 @@ def PlotPulls(categories,histos,axis,data,signal1=None,signal2=None,scaling1=1.1
     histos[categories[0]]["pulls_stat"].SetLineStyle(1)
 
     leg.AddEntry(histos[categories[0]][syst_band],"\pm \sigma_{syst}/\sigma_{stat}","f")
-    leg.AddEntry(histos[categories[0]]["pulls_stat"],"#frac{(Data-fit)}{\sigma_{stat}}","ep")
-    #leg.AddEntry(histos[categories[0]]["pulls_stat"],"(Data-Prediction)/\sigma_{stat}","ep")
+    leg.AddEntry(histos[categories[0]]["pulls_stat"],"(Data-fit)/\sigma_{stat}","ep")
     leg.SetLineColor(0)
     legsig.SetLineColor(0)
 
