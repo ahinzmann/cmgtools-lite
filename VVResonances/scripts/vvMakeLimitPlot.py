@@ -26,7 +26,7 @@ parser.add_option("-T","--titleY",dest="titleY",default='#sigma x #bf{#it{#Beta}
 parser.add_option("-n","--name",dest="name",default='test',help="add a label to the output file name")
 parser.add_option("--spline",dest="spline",action='store_true',default=False)
 parser.add_option("-p","--period",dest="period",default='2016',help="period")
-parser.add_option("-f","--final",dest="final",type=int, default=1,help="Preliminary or not")
+parser.add_option("-f","--final",dest="final",type=int, default=0,help="Preliminary or not")
 parser.add_option("--hvt","--hvt",dest="hvt",type=int, default=0,help="do HVT (1) or do BulkG (2), (0) for single signal")
 parser.add_option("--HVTworkspace","--HVTworkspace",dest="HVTworkspace",default="workspace_JJ_VprimeWV_13TeV.root",help="HVT workspace with spline interpolation")
 parser.add_option("--debug",dest="debug",action='store_true',default=False)
@@ -172,6 +172,9 @@ if options.hvt>=0: #the = is only needed to get the right xsec sf for the single
   if oneSignal == False:
    func1 = w.function(signal1+'_JJ_VV_HPHP_13TeV_'+year+'_sigma')
    func2 = w.function(signal2+'_JJ_VV_HPHP_13TeV_'+year+'_sigma')
+   if options.sig == 'VprimeVHinc' or options.sig == 'VBF_VprimeVHinc':
+    func1 = w.function(signal1+'inc_JJ_VV_HPHP_13TeV_'+year+'_sigma')
+    func2 = w.function(signal2+'inc_JJ_VV_HPHP_13TeV_'+year+'_sigma')
    scaleLimits[str(int(m))] = ROOT.TMath.Exp(func1.getVal(argset))+ROOT.TMath.Exp(func2.getVal(argset))
    if options.sig == 'Vprime' or options.sig == 'VBF_Vprime':
     try:
@@ -188,9 +191,15 @@ if options.hvt>=0: #the = is only needed to get the right xsec sf for the single
   if "prime" not in options.sig or "VBF" in options.sig:
    if options.debug:   print " rescaling limit !!!!! "
    scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
-   if (m >= 4000. and "VBF" in options.sig) or m>5000.:
+   if (m > 3000. and "VBF" in options.sig) or m>5000.:
     if options.debug:    print "extra rescaling for high mx "
     scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+    if (m > 5000. and "VBF" in options.sig) or (m == 5000. and "VBF_Radion" not in options.sig)  or (options.sig == "VBF_ZprimeWW" and m >= 4400.) or (options.sig == "VBF_WprimeWZ" and m >= 4800.) or (options.sig == "VBF_BulkGZZ" and m >= 5000.) or (options.sig == "VBF_ZprimeZHinc" and m >= 4500.) or (options.sig == "VBF_VprimeVHinc" and m >= 4600.) or (options.sig == "VBF_Vprime" and m >= 4600.):
+     if options.debug:    print "double extra rescaling for high mx "
+     scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
+     if (options.sig == "VBF_ZprimeWW" and m >= 5400.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_ZprimeZHinc" and m >= 5500.) or (options.sig == "VBF_VprimeVHinc" and m >= 5600.) or (options.sig == "VBF_BulkGZZ" and m >= 5700.) or (options.sig == "VBF_BulkGWW" and m >= 5800.) or (options.sig == "VBF_BulkGVV" and m == 6000.) or (options.sig == "VBF_WprimeWHinc" and m == 6000.)  or (options.sig == "VBF_VprimeWV" and m >= 5900.) or (options.sig == "VBF_Vprime" and m >= 5600. and m<6000.) or (options.sig == "VBF_WprimeWZ" and m == 6000.):
+      if options.debug:    print "triple! extra rescaling for high mx "
+      scaleLimits[str(int(m))] = scaleLimits[str(int(m))]*10
 
  if oneSignal == False:
   print " initializing theory for more than 1 signal!"
@@ -724,6 +733,10 @@ if "Vprime"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrowVV+VH) HVT_{"+Model+"}"
   ytitle ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VV+VH) [pb]  "
   xtitle = "M_{V'} [TeV]"
+if "VprimeVH"  in options.sig:
+  ltheory="#sigma_{TH}#times BR(V'#rightarrowVH) HVT_{"+Model+"}"
+  ytitle ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow VH) [pb]  "
+  xtitle = "M_{V'} [TeV]"
 if "VprimeWV"  in options.sig:
   ltheory="#sigma_{TH}#times BR(V'#rightarrowWV) HVT_{"+Model+"}"
   ytitle ="#sigma x #bf{#it{#Beta}}("+VBFtype+"V' #rightarrow WV) [pb]  "
@@ -774,7 +787,6 @@ gtheory.Draw("Lsame")
 if options.theoryUnc: gtheorySHADE.Draw("Fsame")
 
 c.SetLogy(options.log)
-c.Draw()
 
 if options.debug: print " I have c "
 
@@ -816,14 +828,16 @@ if options.debug: print " now you have the band legend"
 if not options.blind: leg2.AddEntry(bandObs, " ", "")
 leg2.AddEntry(mean, " ", "L")
 leg2.AddEntry(mean, " ", "L")
-leg2.AddEntry(gtheory, " ", "")
+leg2.AddEntry(gtheorySHADE, " ", "F")
       
 if options.debug: print " now you have the legend "
 
-if options.final:
-    cmslabel_final(c,options.period,11)
+if options.final==1:
+ cmslabel_final(c,options.period,11)
+elif options.final==2:
+ cmslabel_empty(c,options.period,10)
 else:
-    cmslabel_prelim(c,options.period,11)
+ cmslabel_prelim(c,options.period,11)
 leg.Draw()
 leg2.Draw()
 #leg3.Draw()
@@ -836,6 +850,47 @@ if options.blind==0:
 c.SaveAs(filename+".png")    
 c.SaveAs(filename+".pdf")    
 c.SaveAs(filename+".C")    
+
+startmass = 1.3
+outf = open('log_%s.txt'%filename,'w')
+i=startmass
+while i < 6.:
+ i+=0.01 
+ y_exp = mean.Eval(i)
+ if y_exp > gtheory.Eval(i) and mean.Eval(startmass) < gtheory.Eval(startmass) :
+   outf.write("Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+", theory is "+str(gtheory.Eval(i))+"\n")
+   print "Expected excluded mass is "+str(i)+" TeV with signal strenght "+str(y_exp)+", theory is "+str(gtheory.Eval(i))
+   break
+
+if options.blind==0:
+ 
+ exclMass = 0
+ i=startmass
+ while i < 6.:
+  i+=0.01 
+  y_obs = bandObs.Eval(i)
+  if y_obs > gtheory.Eval(i) and bandObs.Eval(startmass)< gtheory.Eval(startmass):
+   outf.write("Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+", theory is "+str(gtheory.Eval(i))+"\n")
+   print "Observed excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+", theory is "+str(gtheory.Eval(i))
+   exclMass = i
+   break
+
+ # these are needed because for some signals we are crossing the line multiple times
+ for j in range(100):
+  i=exclMass
+  while i < 6.:
+   i+=0.01
+   y_obs = bandObs.Eval(i)
+   if y_obs < gtheory.Eval(i) and bandObs.Eval(startmass)< gtheory.Eval(startmass):
+    outf.write("Observed NOT excluded mass "+str(i)+" TeV with signal strenght "+str(y_obs)+"\n")
+    exclMass = i
+    break
+
+
+
+outf.close()
+
+
 
 fout=ROOT.TFile(filename+".root","RECREATE")
 fout.cd()

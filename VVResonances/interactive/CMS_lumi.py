@@ -35,6 +35,7 @@ drawLogo      = False
 def CMS_lumi(pad,  iPeriod,  iPosX, lumiSpecialX =0.,lumiSpecialY=0. ):
     outOfFrame    = False
     if(iPosX/10==0 ): outOfFrame = True
+    if lumiSpecialX ==-1: outOfFrame = True
 
     alignY_=3
     alignX_=2
@@ -106,14 +107,20 @@ def CMS_lumi(pad,  iPeriod,  iPosX, lumiSpecialX =0.,lumiSpecialY=0. ):
     if( outOfFrame ):
         print " special outofframe setting for lumi!!! "
         if lumiSpecialX != 0 or lumiSpecialY != 0:
-            if lumiSpecialX == -1: lumiSpecialX = 20*l+relPosX*(1-l-r)
-            if lumiSpecialY == -1: lumiSpecialY= 1-1.7*t+lumiTextOffset*t
+            if lumiSpecialX == -1: lumiSpecialX = 0.97#30*l+relPosX*(1-l-r)
+            if lumiSpecialY == -1: lumiSpecialY= 0.86 #1-2*t+lumiTextOffset*t
 
         latex.DrawLatex(lumiSpecialX,lumiSpecialY,lumiText)
         latex.SetTextFont(cmsTextFont)
         latex.SetTextAlign(11) 
         latex.SetTextSize(cmsTextSize*t)    
         latex.DrawLatex(l,1-t+lumiTextOffset*t,cmsText)
+        if lumiSpecialX != 0 or lumiSpecialY != 0:
+            latex.SetTextFont(extraTextFont)
+            latex.SetTextSize(extraTextSize*t)
+            latex.SetTextAlign(11)
+            latex.DrawLatex(l, 1-t+0.1*lumiTextOffset*t, extraText)
+
   
     pad.cd()
 
@@ -152,7 +159,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX, lumiSpecialX =0.,lumiSpecialY=0. ):
                 latex.SetTextAlign(align_)
                 latex.SetTextSize(extraTextSize*t)
                 latex.DrawLatex(posX_, posY_- relExtraDY*cmsTextSize*t, extraText)
-    elif( writeExtraText ):
+    elif( writeExtraText and (lumiSpecialX == 0 or lumiSpecialY == 0)):
         if( iPosX==0):
             posX_ =   l +  relPosX*(1-l-r)
             posY_ =   1-t+lumiTextOffset*t

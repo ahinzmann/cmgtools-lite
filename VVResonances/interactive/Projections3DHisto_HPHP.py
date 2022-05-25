@@ -1,20 +1,15 @@
 import os,sys,optparse,time
 import ROOT as rt
-rt.gROOT.ProcessLine(".x tdrstyle.cc")
-import CMS_lumi
-#setTDRStyle()
+import tdrstyle
+tdrstyle.setTDRStyle()
+import CMGTools.VVResonances.plotting.CMS_lumi as CMS_lumi
 rt.gStyle.SetOptStat(0)
 rt.gStyle.SetOptTitle(0)
 rt.gROOT.SetBatch(True)
 
 
 # Run from command line with
-#python Projections3DHisto.py --mc 2017/JJ_nonRes_HPLP.root,nonRes -k 2016/JJ_nonRes_3D_HPLP_2017_copy.root,histo -o control-plots-HPLP-pythia
-#python Projections3DHisto.py --mc 2017/JJ_nonRes_HPHP.root,nonRes -k 2016/JJ_nonRes_3D_HPHP_2017_copy.root,histo -o control-plots-HPHP-pythia
-#python Projections3DHisto.py --mc 2016/JJ_nonRes_LPLP_altshapeUp.root,nonRes -k 2016/JJ_nonRes_3D_LPLP_fixed.root,histo_altshapeUp -o control-plots-LPLPfixed-herwig
-#python Projections3DHisto.py --mc 2016/JJ_nonRes_LPLP_altshapeUp.root,nonRes -k 2016/JJ_nonRes_3D_LPLP.root,histo_altshapeUp -o control-plots-LPLP-herwig
-#python Projections3DHisto.py --mc 2016/JJ_nonRes_LPLP_altshapeUp.root,nonRes -k JJ_nonRes_3D_LPLP.root,histo -o control-plots-LPLPnew-herwig
-#python Projections3DHisto.py --mc JJ_nonRes_LPLP_nominal.root,nonRes -k JJ_nonRes_3D_LPLP.root,histo -o control-plots-LPLP-pythia
+#python Projections3DHisto_HPHP.py --mc ${normdir}/JJ_${period}_nonRes_${catOut}${labels[$i]}.root,nonRes -k save_new_shapes_${period}_${samples[$i]}_${catOut}_3D.root,histo -o control-plots-coarse-${period}-${catOut}-${samples[$i]} --period "${period}" -l ${nicelabels[$i]}
 
 def get_canvas(cname,period="2016"):
 
@@ -55,15 +50,56 @@ def get_canvas(cname,period="2016"):
  
  return canvas
 
+def get_canvas_forRatio(cname,period="2016"):
+
+ #change the CMS_lumi variables (see CMS_lumi.py)
+ CMS_lumi.lumi_7TeV = "4.8 fb^{-1}"
+ CMS_lumi.lumi_8TeV = "18.3 fb^{-1}"
+ CMS_lumi.writeExtraText = 1
+ CMS_lumi.extraText = "Simulation"
+ CMS_lumi.lumi_sqrtS = "13 TeV ("+options.period+")" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+
+ iPos = 10
+ CMS_lumi.relPosX = 0.12
+
+ H_ref = 600
+ W_ref = 600
+ W = W_ref
+ H  = H_ref
+
+ iPeriod = 0
+
+ # references for T, B, L, R
+ T = 0.07*H_ref
+ B = 0.12*H_ref
+ L = 0.15*W_ref
+ R = 0.05*W_ref
+
+ canvas = rt.TCanvas(cname,cname,W,H)
+ canvas.SetFillColor(0)
+ canvas.SetBorderMode(0)
+ canvas.SetFrameFillStyle(0)
+ canvas.SetFrameBorderMode(0)
+ canvas.SetFrameBorderSize(0)
+ canvas.SetFrameLineWidth(0)
+ canvas.SetLeftMargin( L/W )
+ canvas.SetRightMargin( R/W )
+ canvas.SetTopMargin( T/H )
+ canvas.SetBottomMargin( B/H )
+ canvas.SetTickx(0)
+ canvas.SetTicky(0)
+
+ return canvas
+
 parser = optparse.OptionParser()
 parser.add_option("--mc","--mc",dest="mc",help="File with mc events and histo name (separated by comma)",default='JJ_nonRes_HPHP_nominal.root,nonRes')
 parser.add_option("-k","--kernel",dest="kernel",help="File with kernel and histo name (separated by comma)",default='JJ_nonRes_3D_HPHP.root,histo')
 parser.add_option("-o","--outdir",dest="outdir",help="Output directory for plots",default='control-plots')
 parser.add_option("-l","--label",dest="label",help="MC type label (Pythia8, Herwig, Madgraph, Powheg)",default='Pythia8')
 parser.add_option("-p","--period",dest="period",default="2016")
+parser.add_option("--prelim",dest="prelim",help="which CMS labels?",default='prelim')
 (options,args) = parser.parse_args()
-
-#void Projections3DHisto(std::string dataFile, std::string hdataName, std::string fitFile, std::string hfitName, std::string outDirName){
+prelim = options.prelim
 
 os.system('rm -rf %s'%options.outdir)
 os.system('mkdir %s'%options.outdir)
@@ -138,19 +174,18 @@ for i in range(len(zbinMin)):
  hy[i].Scale(scale[i])
  hxMC[i].Scale(scale[i])
  hyMC[i].Scale(scale[i])
-    
  hx[i].SetLineColor(colors[i])
  hx[i].SetMarkerColor(colors[i])
  hy[i].SetLineColor(colors[i])
  hy[i].SetMarkerColor(colors[i])
  hxMC[i].SetLineColor(colors[i])
  hxMC[i].SetMarkerColor(colors[i])
- hxMC[i].SetMarkerStyle(20)
- hxMC[i].SetMarkerSize(0.5)
+ hxMC[i].SetMarkerStyle(20+i)
+ hxMC[i].SetMarkerSize(0.8)
  hyMC[i].SetLineColor(colors[i])
  hyMC[i].SetMarkerColor(colors[i]) 
- hyMC[i].SetMarkerStyle(20)
- hyMC[i].SetMarkerSize(0.5)
+ hyMC[i].SetMarkerStyle(20+i)
+ hyMC[i].SetMarkerSize(0.8)
  
  pullsx[i].SetLineColor(colors[i])
  pullsx[i].SetLineWidth(2)
@@ -171,33 +206,112 @@ for i in range(len(zbinMin)):
  hyMC[i].Rebin(2)
   
 #leg = rt.TLegend(0.6,0.6,0.85,0.8)
-leg = rt.TLegend(0.51,0.75,0.76,0.90)
+leg = rt.TLegend(0.51,0.7,0.76,0.85)
 leg.SetBorderSize(0)
 leg.SetTextSize(0.035)
 leg.AddEntry(hxMC[0],"Simulation (%s)"%options.label,"LP")
 leg.AddEntry(hx[0],"Template","L")
 for i in range(1,len(zbinMin)):
  leg.AddEntry(hx[i],"%.1f < m_{jj} < %.1f TeV"%( hin.GetZaxis().GetBinLowEdge(zbinMin[i])/1000.,hin.GetZaxis().GetBinUpEdge(zbinMax[i])/1000.) )
- 
-cx = get_canvas("cx",options.period)
+
+# ------------------------------------------------------ X
+cx = get_canvas_forRatio("cx",options.period)
 cx.cd()
+
+# Upper histogram plot is pad1
+pad1 = rt.TPad("pad1", "pad1", 0, 0.31, 1, 1.0)
+pad1.SetBottomMargin(0)  # joins upper and lower plot
+pad1.SetRightMargin(0.05)
+pad1.SetLeftMargin(0.15)
+pad1.SetTopMargin(0.1)
+pad1.Draw()
+
+# Lower ratio plot is pad2
+cx.cd()  # returns to main canvas before defining pad2
+pad2 = rt.TPad("pad2", "pad2", 0, 0.00, 1, 0.3)
+pad2.SetTopMargin(0)  # joins upper and lower plot
+pad2.SetBottomMargin(0.25)
+pad2.SetRightMargin(0.05)
+pad2.SetLeftMargin(0.15)
+pad2.Draw()
+
+pad1.cd()
+
 for i in range(len(zbinMin)):
  hx[i].Draw("HISTsame")
  hxMC[i].Draw("PEsame")
 hx[0].GetXaxis().SetTitle("m_{jet1} (proj. x) [GeV]")
+hx[0].GetYaxis().SetTitle("a.u.")
 leg.Draw()
 
-CMS_lumi.CMS_lumi(cx, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(cx,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(cx,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(cx,'sim',11)
+
+pad2.cd()
+
+hxMC_r = []
+for i in range(len(zbinMin)):
+ h = hxMC[i].Clone("hx_%i"%i)
+ for b in range(1,binsx+1):
+  hx[i].SetBinError(b,0.)
+
+ h.Divide(hx[i])
+ hxMC_r.append( h )
+
+ hxMC_r[i].Draw("epsame")
+hxMC_r[0].GetXaxis().SetTitleSize(0.11)
+hxMC_r[0].GetXaxis().SetLabelSize(0.11)
+hxMC_r[0].GetYaxis().SetTitleSize(0.11)
+hxMC_r[0].GetYaxis().SetTitleOffset(0.5)
+hxMC_r[0].GetYaxis().SetLabelSize(0.11)
+hxMC_r[0].GetYaxis().SetRangeUser(0.,2.)
+hxMC_r[0].GetYaxis().SetNdivisions(5)
+hxMC_r[0].GetXaxis().SetTitle("m_{jet1} (proj. x) [GeV]")
+hxMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
+
+linea =  rt.TLine(xmin,1.,xmax,1.);
+linea.SetLineColor(17);
+linea.SetLineWidth(2);
+linea.SetLineStyle(2);
+linea.Draw("same");
+
 cx.cd()
 cx.Update()
 cx.RedrawAxis()
 frame = cx.GetFrame()
 frame.Draw()
 cx.SaveAs(options.outdir+"/cx.png","pdf")
+cx.SaveAs(options.outdir+"/cx.C")
+cx.SaveAs(options.outdir+"/cx.pdf")
 
-cy = get_canvas("cy",options.period)
+#--------------------------------------------------- Y
+cy = get_canvas_forRatio("cy",options.period)
 cy.cd()
+# Upper histogram plot is pad1                                                                                                                                
+pad1y = rt.TPad("pad1", "pad1", 0, 0.31, 1, 1.0)
+pad1y.SetBottomMargin(0)  # joins upper and lower plot
+pad1y.SetRightMargin(0.05)
+pad1y.SetLeftMargin(0.15)
+pad1y.SetTopMargin(0.1)
+pad1y.Draw()
+
+# Lower ratio plot is pad2
+cy.cd()  # returns to main canvas before defining pad2
+pad2y = rt.TPad("pad2", "pad2", 0, 0.00, 1, 0.3)
+pad2y.SetTopMargin(0)  # joins upper and lower plot
+pad2y.SetBottomMargin(0.25)
+pad2y.SetRightMargin(0.05)
+pad2y.SetLeftMargin(0.15)
+pad2y.Draw()
+
+pad1y.cd()
+
 hy[0].GetXaxis().SetTitle("m_{jet2} (proj. y) [GeV]")
+hy[0].GetYaxis().SetTitle("a.u.")
 hy[0].GetXaxis().SetTitleSize(hx[0].GetXaxis().GetTitleSize())
 hy[0].GetXaxis().SetTitleOffset(hx[0].GetXaxis().GetTitleOffset())
 for i in range(len(zbinMin)): 
@@ -205,13 +319,45 @@ for i in range(len(zbinMin)):
  hyMC[i].Draw("PEsame")
 leg.Draw()
 
-CMS_lumi.CMS_lumi(cy, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(cy,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(cy,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(cy,'sim',11)
+
+pad2y.cd()
+
+hyMC_r = []
+for i in range(len(zbinMin)):
+ h = hyMC[i].Clone("hy_%i"%i)
+ for b in range(1,binsx+1):
+  hy[i].SetBinError(b,0.)
+
+ h.Divide(hy[i])
+ hyMC_r.append( h )
+
+ hyMC_r[i].Draw("epsame")
+hyMC_r[0].GetXaxis().SetTitleSize(0.11)
+hyMC_r[0].GetXaxis().SetLabelSize(0.11)
+hyMC_r[0].GetYaxis().SetTitleSize(0.11)
+hyMC_r[0].GetYaxis().SetTitleOffset(0.5)
+hyMC_r[0].GetYaxis().SetLabelSize(0.11)
+hyMC_r[0].GetYaxis().SetRangeUser(0.,2.)
+hyMC_r[0].GetYaxis().SetNdivisions(5)
+hyMC_r[0].GetXaxis().SetTitle("m_{jet2} (proj. y) [GeV]")
+hyMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
+
+linea.Draw("same");
+
 cy.cd()
 cy.Update()
 cy.RedrawAxis()
 frame = cy.GetFrame()
 frame.Draw()
 cy.SaveAs(options.outdir+"/cy.png","pdf")
+cy.SaveAs(options.outdir+"/cy.C")
+cy.SaveAs(options.outdir+"/cy.pdf")
 
 '''
 labelsXY = ['All m_{jj} bins']
@@ -329,24 +475,81 @@ for i in range(1,len(xbinMin)):
  leg2.AddEntry(hz[i],"%i < m_{jet} < %i GeV"%(  hin.GetXaxis().GetBinLowEdge(xbinMin[i]),hin.GetXaxis().GetBinUpEdge(xbinMax[i])) )
  #else: leg2.AddEntry(hz[i],"%i < m_{jet} < %i GeV"%(  hin.GetXaxis().GetBinLowEdge(xbinMin[i]),hin.GetXaxis().GetBinUpEdge(xbinMax[i])) )
 
-cz = get_canvas("cz",options.period)
-cz.SetLogy()
+#------------------------------------------------- Z
+cz = get_canvas_forRatio("cz",options.period)
+#cz.SetLogy()
 cz.cd()
+
+# Upper histogram plot is pad1
+pad1z = rt.TPad("pad1", "pad1", 0, 0.31, 1, 1.0)
+pad1z.SetBottomMargin(0)  # joins upper and lower plot                                                                                                                      
+pad1z.SetRightMargin(0.05)
+pad1z.SetLeftMargin(0.15)
+pad1z.SetTopMargin(0.09)
+pad1z.Draw()
+
+# Lower ratio plot is pad2
+cz.cd()  # returns to main canvas before defining pad2
+pad2z = rt.TPad("pad2", "pad2", 0, 0.00, 1, 0.3)
+pad2z.SetTopMargin(0)  # joins upper and lower plot
+pad2z.SetBottomMargin(0.25)
+pad2z.SetRightMargin(0.05)
+pad2z.SetLeftMargin(0.15)
+pad2z.Draw()
+pad1z.cd()
+pad1z.SetLogy()
+
 hz[0].SetMinimum(1E-09)
 hz[0].SetMaximum(10.0)
 for i in range(len(xbinMin)):
  hz[i].Draw("HISTsame")
  hzMC[i].Draw("PEsame")
 hz[0].GetXaxis().SetTitle("m_{jj} (proj. z) [GeV]")
+hz[0].GetYaxis().SetTitle("a.u.")
 leg2.Draw()
 
-CMS_lumi.CMS_lumi(cz, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(cz,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(cz,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(cz,'sim',11)
+
+pad2z.cd()
+hzMC_r = []
+for i in range(len(xbinMin)):
+ h = hzMC[i].Clone("hz_%i"%i)
+ for b in range(1,binsx+1):
+  hz[i].SetBinError(b,0.)
+
+ h.Divide(hz[i])
+ hzMC_r.append( h )
+
+ hzMC_r[i].Draw("epsame")
+hzMC_r[0].GetXaxis().SetTitleSize(0.11)
+hzMC_r[0].GetXaxis().SetLabelSize(0.11)
+hzMC_r[0].GetYaxis().SetTitleSize(0.11)
+hzMC_r[0].GetYaxis().SetTitleOffset(0.5)
+hzMC_r[0].GetYaxis().SetLabelSize(0.11)
+hzMC_r[0].GetYaxis().SetRangeUser(0.,2.)
+hzMC_r[0].GetYaxis().SetNdivisions(5)
+hzMC_r[0].GetXaxis().SetTitle("m_{jj} (proj. z) [GeV]")
+hzMC_r[0].GetYaxis().SetTitle("#frac{Simulation}{Template}")
+
+lineaz =  rt.TLine(zmin,1.,zmax,1.);
+lineaz.SetLineColor(17);
+lineaz.SetLineWidth(2);
+lineaz.SetLineStyle(2);
+lineaz.Draw("same");
+
 cz.cd()
 cz.Update()
 cz.RedrawAxis()
 frame = cz.GetFrame()
 frame.Draw()
 cz.SaveAs(options.outdir+"/cz.png","pdf")
+cz.SaveAs(options.outdir+"/cz.pdf","pdf")
+cz.SaveAs(options.outdir+"/cz.C")
 
 labelsZ = ["All m_{jet} bins"]
 for i in range(1,len(xbinMin)):
@@ -471,6 +674,7 @@ czSyst.SetLogy()
 #hz[4].Scale(1./0.001)
 hz[0].SetMinimum(1E-06)
 hz[0].SetMaximum(10.0)
+
 hz[0].Draw("HIST")
 hz_PTUp.Draw("HISTsame")
 hz_PTDown.Draw("HISTsame") 
@@ -490,45 +694,47 @@ hz_TurnOnDown.Draw("HISTsame")
 hzMC[0].Draw("same")
 leg3.Draw()
 
-CMS_lumi.CMS_lumi(czSyst, 0, 11)
+#CMS_lumi.CMS_lumi(czSyst, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(czSyst,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(czSyst,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(czSyst,'sim',11)
+
 czSyst.cd()
 czSyst.Update()
 czSyst.RedrawAxis()
 frame = czSyst.GetFrame()
 frame.Draw()
 czSyst.SaveAs(options.outdir+"/czSyst.png","pdf")
+czSyst.SaveAs(options.outdir+"/czSyst.pdf","pdf")
+czSyst.SaveAs(options.outdir+"/czSyst.C")
 
+#------------------------------------------------------------------------ X
 hx_PTUp = hin_PTUp.ProjectionX("px_PTUp",1,binsy,zbinMin[0],zbinMax[0])
 hx_PTUp.SetLineColor(rt.kMagenta)
-hx_PTUp.Rebin(2)
 hx_PTUp.Scale(1./hx_PTUp.Integral())
 hx_PTDown = hin_PTDown.ProjectionX("px_PTDown",1,binsy,zbinMin[0],zbinMax[0])
 hx_PTDown.SetLineColor(rt.kMagenta)
-hx_PTDown.Rebin(2)
 hx_PTDown.Scale(1./hx_PTDown.Integral())
 hx_OPTUp = hin_OPTUp.ProjectionX("px_OPTUp",1,binsy,zbinMin[0],zbinMax[0])
 hx_OPTUp.SetLineColor(210)
-hx_OPTUp.Rebin(2)
 hx_OPTUp.Scale(1./hx_OPTUp.Integral())
 hx_OPTDown = hin_OPTDown.ProjectionX("px_OPTDown",1,binsy,zbinMin[0],zbinMax[0])
 hx_OPTDown.SetLineColor(210)
-hx_OPTDown.Rebin(2)
 hx_OPTDown.Scale(1./hx_OPTDown.Integral())
 hx_altshapeUp = hin_altshapeUp.ProjectionX("px_altshapeUp",1,binsy,zbinMin[0],zbinMax[0])
 hx_altshapeUp.SetLineColor(rt.kBlue)
-hx_altshapeUp.Rebin(2)
 hx_altshapeUp.Scale(1./hx_altshapeUp.Integral())
 hx_altshapeDown = hin_altshapeDown.ProjectionX("px_altshapeDown",1,binsy,zbinMin[0],zbinMax[0])
 hx_altshapeDown.SetLineColor(rt.kBlue)
-hx_altshapeDown.Rebin(2)
 hx_altshapeDown.Scale(1./hx_altshapeDown.Integral())
 hx_altshape2Up = hin_altshape2Up.ProjectionX("px_altshape2Up",1,binsy,zbinMin[0],zbinMax[0])
 hx_altshape2Up.SetLineColor(rt.kRed)
-hx_altshape2Up.Rebin(2)
 hx_altshape2Up.Scale(1./hx_altshape2Up.Integral())
 hx_altshape2Down = hin_altshape2Down.ProjectionX("px_altshape2Down",1,binsy,zbinMin[0],zbinMax[0])
 hx_altshape2Down.SetLineColor(rt.kRed)
-hx_altshape2Down.Rebin(2)
 hx_altshape2Down.Scale(1./hx_altshape2Down.Integral())
 #hx_altshape3Up = hin_altshape3Up.ProjectionX("px_altshape3Up",1,binsy,zbinMin[0],zbinMax[0])
 #hx_altshape3Up.SetLineColor(rt.kOrange+1)
@@ -536,13 +742,10 @@ hx_altshape2Down.Scale(1./hx_altshape2Down.Integral())
 #hx_altshape3Down.SetLineColor(rt.kOrange+1)
 hx_TurnOnUp = hin_TurnOnUp.ProjectionX("px_TurnOnUp",xbinMin[0],xbinMax[0],zbinMin[0],zbinMax[0])
 hx_TurnOnUp.SetLineColor(rt.kViolet-6)
-hx_TurnOnUp.Rebin(2)
 hx_TurnOnUp.Scale(1./hx_TurnOnUp.Integral())
 hx_TurnOnDown = hin_TurnOnDown.ProjectionX("px_TurnOnDown",xbinMin[0],xbinMax[0],zbinMin[0],zbinMax[0])
 hx_TurnOnDown.SetLineColor(rt.kViolet-6)
-hx_TurnOnDown.Rebin(2)
 hx_TurnOnDown.Scale(1./hx_TurnOnDown.Integral())
-
 
 hxMC[0].Scale(1./hxMC[0].Integral())
 hx[0].Scale(1./hx[0].Integral())
@@ -580,46 +783,47 @@ hx_TurnOnDown.Draw("HISTsame")
 hxMC[0].Draw("same")
 leg3.Draw()
 
-CMS_lumi.CMS_lumi(cxSyst, 0, 11)
+#CMS_lumi.CMS_lumi(cxSyst, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(cxSyst,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(cxSyst,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(cxSyst,'sim',11)
+
 cxSyst.cd()
 cxSyst.Update()
 cxSyst.RedrawAxis()
 frame = cxSyst.GetFrame()
 frame.Draw()
 cxSyst.SaveAs(options.outdir+"/cxSyst.png","pdf")
+cxSyst.SaveAs(options.outdir+"/cxSyst.pdf","pdf")
+cxSyst.SaveAs(options.outdir+"/cxSyst.C")
 
-
+#------------------------------------------------------------------------ Y
 hy_PTUp = hin_PTUp.ProjectionY("py_PTUp",1,binsy,zbinMin[0],zbinMax[0])
 hy_PTUp.SetLineColor(rt.kMagenta)
-hy_PTUp.Rebin(2)
 hy_PTUp.Scale(1./hy_PTUp.Integral())
 hy_PTDown = hin_PTDown.ProjectionY("py_PTDown",1,binsy,zbinMin[0],zbinMax[0])
 hy_PTDown.SetLineColor(rt.kMagenta)
-hy_PTDown.Rebin(2)
 hy_PTDown.Scale(1./hy_PTDown.Integral())
 hy_OPTUp = hin_OPTUp.ProjectionY("py_OPTUp",1,binsy,zbinMin[0],zbinMax[0])
 hy_OPTUp.SetLineColor(210)
-hy_OPTUp.Rebin(2)
 hy_OPTUp.Scale(1./hy_OPTUp.Integral())
 hy_OPTDown = hin_OPTDown.ProjectionY("py_OPTDown",1,binsy,zbinMin[0],zbinMax[0])
 hy_OPTDown.SetLineColor(210)
-hy_OPTDown.Rebin(2)
 hy_OPTDown.Scale(1./hy_OPTDown.Integral())
 hy_altshapeUp = hin_altshapeUp.ProjectionY("py_altshapeUp",1,binsy,zbinMin[0],zbinMax[0])
 hy_altshapeUp.SetLineColor(rt.kBlue)
-hy_altshapeUp.Rebin(2)
 hy_altshapeUp.Scale(1./hy_altshapeUp.Integral())
 hy_altshapeDown = hin_altshapeDown.ProjectionY("py_altshapeDown",1,binsy,zbinMin[0],zbinMax[0])
 hy_altshapeDown.SetLineColor(rt.kBlue)
-hy_altshapeDown.Rebin(2)
 hy_altshapeDown.Scale(1./hy_altshapeDown.Integral())
 hy_altshape2Up = hin_altshape2Up.ProjectionY("py_altshape2Up",1,binsy,zbinMin[0],zbinMax[0])
 hy_altshape2Up.SetLineColor(rt.kRed)
-hy_altshape2Up.Rebin(2)
 hy_altshape2Up.Scale(1./hy_altshape2Up.Integral())
 hy_altshape2Down = hin_altshape2Down.ProjectionY("py_altshape2Down",1,binsy,zbinMin[0],zbinMax[0])
 hy_altshape2Down.SetLineColor(rt.kRed)
-hy_altshape2Down.Rebin(2)
 hy_altshape2Down.Scale(1./hy_altshape2Down.Integral())
 #hy_altshape3Up = hin_altshape3Up.ProjectionY("py_altshape3Up",1,binsy,zbinMin[0],zbinMax[0])
 #hy_altshape3Up.SetLineColor(rt.kOrange+1)
@@ -627,11 +831,9 @@ hy_altshape2Down.Scale(1./hy_altshape2Down.Integral())
 #hy_altshape3Down.SetLineColor(rt.kOrange+1)
 hy_TurnOnUp = hin_TurnOnUp.ProjectionY("py_TurnOnUp",xbinMin[0],xbinMax[0],zbinMin[0],zbinMax[0])
 hy_TurnOnUp.SetLineColor(rt.kViolet-6)
-hy_TurnOnUp.Rebin(2)
 hy_TurnOnUp.Scale(1./hy_TurnOnUp.Integral())
 hy_TurnOnDown = hin_TurnOnDown.ProjectionY("py_TurnOnDown",xbinMin[0],xbinMax[0],zbinMin[0],zbinMax[0])
 hy_TurnOnDown.SetLineColor(rt.kViolet-6)
-hy_TurnOnDown.Rebin(2)
 hy_TurnOnDown.Scale(1./hy_TurnOnDown.Integral())
 
 hyMC[0].Scale(1./hyMC[0].Integral())
@@ -670,13 +872,20 @@ hy_TurnOnDown.Draw("HISTsame")
 hyMC[0].Draw("same")
 leg3.Draw()
 
-CMS_lumi.CMS_lumi(cySyst, 0, 11)
+if prelim.find("prelim")!=-1:
+ CMS_lumi.cmslabel_sim_prelim(cySyst,'sim',11)
+elif prelim.find("thesis")!=-1:
+ CMS_lumi.cmslabel_thesis(cySyst,'sim',0)
+else:
+ CMS_lumi.cmslabel_sim(cySyst,'sim',11)
 cySyst.cd()
 cySyst.Update()
 cySyst.RedrawAxis()
 frame = cySyst.GetFrame()
 frame.Draw()
 cySyst.SaveAs(options.outdir+"/cySyst.png","pdf")
+cySyst.SaveAs(options.outdir+"/cySyst.pdf","pdf")
+cySyst.SaveAs(options.outdir+"/cySyst.C")
 
 
 

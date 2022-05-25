@@ -1,4 +1,4 @@
-from tools.DatacardTools import *
+from tools.DatacardToolsAdditionalTests import *
 import sys,os
 import ROOT
 import json
@@ -33,6 +33,8 @@ parser.add_option("--vv",dest="vv",help="make VV only (no VHveto) ?",action='sto
 parser.add_option("--tau",dest="tau",help="tau21 ?",action='store_true',default=False)
 parser.add_option("--four",dest="four",help="is VH HPLP merged in VV HPLP?",action='store_true')
 parser.add_option("--kfactors",dest="kfactors",help="use combination of kfactors as V+Jets MVV alternative shapes?",action='store_true',default=False)
+parser.add_option("--nokfactors",dest="nokfactors",help="use vjets samples with removed kfactors",action='store_true',default=False)
+parser.add_option("--twopars",dest="twopars",help="use templates from fit with 2 pars function",action='store_true',default=False)
 parser.add_option("--rescale",dest="rescale",help="use the rescale option if you want to rescale the QCD after having performed a preliminary postfit.",action='store_true')
 parser.add_option("--corrvbf",dest="corrvbf",help="correlate VBF cat with non VBF cat + 1 nuisance for all VBF for QCD and V+jets",action='store_true',default=False)
 parser.add_option("--peryear",dest="peryear",help="divide tagger eff per year",action='store_false',default=True) #this may look counter intuitive, but it is modified to have the chosen option as default for safety
@@ -83,6 +85,14 @@ ctx = cuts.cuts("init_VV_VH.json",options.period,"dijetbins_random")
 lumi = ctx.lumi
 lumi_unc = ctx.lumi_unc
 if rescale == True: sf_qcd=lumi["Run2"]/lumi[options.period]
+
+testPetar = 1.
+for key in lumi:
+  print key,lumi[key]
+  print "rescale"
+  lumi[key] = lumi[key]*testPetar
+  print key,lumi[key]
+
 
 scales = [1.,1.]
 scalesHiggs = [1.,1.]
@@ -148,27 +158,41 @@ for sig in signals:
       ncontrib+=1      
       print "##########################       including W/Z jets in datacard      ######################"
       rootFileNorm = resultsDir[dataset]+'/JJ_%s_WJets_%s.root'%(dataset,p)
+      if options.nokfactors == True: rootFileNorm = 'Vjets_Mjj_nokfactors/JJ_%s_WJets_%s.root'%(dataset,p)
       if options.fitvjetsmjj == True:
         rootFileMVV =  resultsDir[dataset]+'/JJ_%s_WJets_MVV_NP_Wjets'%dataset+'.json'
         Tools.AddWResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib,["CMS_VV_JJ_WJets_slope",0.5])
       else:
         rootFileMVV = resultsDir[dataset]+'/JJ_%s_WJets_MVV_'%dataset+shape_purity+'.root'
+        if options.nokfactors == True: rootFileMVV = 'Vjets_Mjj_nokfactors/JJ_%s_WJets_MVV_'%dataset+shape_purity+'.root'
+        if options.twopars == True: rootFileMVV = 'Vjets_2parFits/JJ_%s_WJets_MVV_'%dataset+shape_purity+'.root'
+        print " ___________ WJets MVV file ",rootFileMVV
         Tools.AddWResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
       ncontrib+=1
       
       rootFileNorm = resultsDir[dataset]+"/JJ_%s_ZJets_%s.root"%(dataset,p)
+      if options.nokfactors == True: rootFileNorm = 'Vjets_Mjj_nokfactors/JJ_%s_ZJets_%s.root'%(dataset,p)
       if options.fitvjetsmjj == True:
         rootFileMVV =  resultsDir[dataset]+'/JJ_%s_ZJets_MVV_NP_Zjets'%dataset+'.json'
         Tools.AddZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib,["CMS_VV_JJ_ZJets_slope",0.5])
       else:
         rootFileMVV = resultsDir[dataset]+'/JJ_%s_ZJets_MVV_'%dataset+shape_purity+'.root'
+        if options.twopars == True: rootFileMVV = 'Vjets_2parFits/JJ_%s_ZJets_MVV_'%dataset+shape_purity+'.root'
+        if options.nokfactors == True: rootFileMVV = 'Vjets_Mjj_nokfactors/JJ_%s_ZJets_MVV_'%dataset+shape_purity+'.root'
         Tools.AddZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
       ncontrib+=1
 
       if pseudodata !="qcdvjets":
         print "##########################       including tt+jets in datacard      ######################"
         contrib =["resT","resW","nonresT","resTnonresT","resWnonresT","resTresW"]
+        #rootFileMVV = {ttcon:resultsDir[dataset]+'/bkcp_TTMVV/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_'+shape_purity+'.root' for ttcon in contrib}
+        #print "*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&"
+        #print " attention using ttt templates from kernels ###################*&*&*&*&*&*&**&*&*&*&*&*&*&*&"
+        #print "*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&*&*&*&*&*&*&**&*&*&*&*&*&*&*&"
+        #print rootFileMVV
         rootFileMVV = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_'+shape_purity+'.root' for ttcon in contrib}
+        if options.twopars == True: rootFileMVV = {ttcon:'TTbar_2parFits/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_'+shape_purity+'.root' for ttcon in contrib}
+        #rootFileMVV = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_MVV_NP.root' for ttcon in contrib}
         rootFileNorm = {ttcon:resultsDir[dataset]+'/JJ_'+dataset+'_TTJets'+ttcon+'_'+p+'.root' for ttcon in contrib}
         jsonfileNorm = resultsDir[dataset]+'/'+options.jsonname+'_'+dataset+'_'+p+'.json'
         if options.fitTTmjj == True:
@@ -177,9 +201,16 @@ for sig in signals:
         else:
           print "load templates"
           Tools.AddTTBackground4(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib,jsonfileNorm)
-          ncontrib+=6
+          #rootFileMVV  = resultsDir[dataset]+'/JJ_'+dataset+'_TTJets_MVV_'+p+'.root'
+          #rootFileNorm = resultsDir[dataset]+'/JJ_'+dataset+'_TTJets_'+p+'.root'
+          #Tools.AddTTBackground2(card,dataset,p,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
+          #ncontrib+=1 --> with old implementation
+          ncontrib+=6 #--> with new implementation
+          #ncontrib+=3 #--> with new implementation
       else:
         print "########^^^^^^^^^^^^^^ NOT ADDING TTBAR!!!!! ^^^^^^^^^^^^^########################"
+
+
 
       if options.dib == True:
         print "##########################       including WZ and ZZ in datacard      ######################"
@@ -187,7 +218,7 @@ for sig in signals:
         rootFileMVV = resultsDir[dataset]+'/JJ_%s_WZ_MVV_'%dataset+'NP.root'
         Tools.AddWZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
         ncontrib+=1
-
+      
         rootFileNorm = resultsDir[dataset]+"/JJ_%s_ZZJets_%s.root"%(dataset,p)
         rootFileMVV = resultsDir[dataset]+'/JJ_%s_ZZ_MVV_'%dataset+'NP.root'
         Tools.AddZZResBackground(card,dataset,shape_purity,rootFileMVV,rootFileNorm,resultsDir[dataset],ncontrib)
@@ -195,14 +226,16 @@ for sig in signals:
 
 
       print "##########################       including QCD in datacard      ######################"
-      rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_pythia_{purity}_3D.root".format(year=dataset,purity=shape_purity)
+      #rootFile3DPDF = resultsDir[dataset]+'/JJ_2016_nonRes_3D_VV_HPLP.root'
+      rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_pythia_{purity}_3D.root".format(year=dataset,purity=shape_purity)#    save_new_shapes_%s_pythia_"%dataset+"_""VVVH_all"+"_3D.root"
+      #rootFile3DPDF = resultsDir[dataset]+"/save_new_shapes_{year}_madgraph_{purity}_3D.root".format(year=dataset,purity=p)#    save_new_shapes_%s_pythia_"%dataset+"_""VVVH_all"+"_3D.root"
       print "rootFile3DPDF ",rootFile3DPDF
       rootFileNorm = resultsDir[dataset]+"/JJ_%s_nonRes_"%dataset+p+".root"
+      #rootFileNorm = resultsDir[dataset]+"/JJ_%s_nonRes_"%dataset+p+"_altshape2.root"
       print "rootFileNorm ",rootFileNorm
 
       Tools.AddNonResBackground(card,dataset,shape_purity,rootFile3DPDF,rootFileNorm,ncontrib,options.rescale,options.inputdir)
       print "##########################       QCD added in datacard      ######################"
-
 
 
       print " including data or pseudodata in datacard"
@@ -213,8 +246,9 @@ for sig in signals:
       elif pseudodata=="True":
         print "Using pseudodata with all backgrounds (QCD, V+jets and tt+jets)"
         rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_PDALL_"+p+".root"
+        #rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_PDALL_"+p+"_mad.root"
         histName="data"
-        scaleData=1.0
+        scaleData=1.0*testPetar
       elif pseudodata=="ttjets":
         print "Using pseudodata with only tt+jets backgrounds"
         rootFileData = resultsDir[dataset]+"/JJ_"+dataset+"_TTJets_"+p+".root"
@@ -297,9 +331,9 @@ for sig in signals:
 
         
       card.makeCard()
-      t2wcmd = "text2workspace.py %s -o %s"%(cardName,workspaceName)
-      print t2wcmd
-      os.system(t2wcmd)
+      #t2wcmd = "text2workspace.py %s -o %s"%(cardName,workspaceName)
+      #print t2wcmd
+      #os.system(t2wcmd)
     del card
 
     print "#####################################"

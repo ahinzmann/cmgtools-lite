@@ -109,7 +109,7 @@ markeryears={'2016':8, '2017':25,'2018':22,'Run2':32}
 
 def doYields(signal,legend,years,colorindex):
 
-    purities=["VV_HPHP","VV_HPLP","VH_HPHP","VH_HPLP","VH_LPHP"]
+    purities=["VV_HPHP","VV_HPLP","VH_HPHP","VH_HPLP","VH_LPHP","VBF_VV_HPHP","VBF_VH_HPHP","VBF_VV_HPLP","VBF_VH_HPLP","VBF_VH_LPHP"]
     gr = {}
     for purity in purities:
       print " working on ",purity
@@ -449,8 +449,8 @@ def doJetMass(leg,signal,titles,years):
                 
 if __name__ == '__main__':
 
-    signals = ["BulkGZZ","WprimeWZ","BulkGWW","ZprimeWW","ZprimeZH","WprimeWH"]
-    legs = ["G_{bulk} #rightarrow ZZ","W' #rightarrow WZ","G_{bulk} #rightarrow WW","Z'#rightarrow WW","Z'#rightarrow ZH","W'#rightarrow WH"]
+    signals = ["BulkGZZ","WprimeWZ","BulkGWW","ZprimeWW","ZprimeZH","WprimeWH","ZprimeZHinc","WprimeWHinc"]
+    legs = ["G_{bulk} #rightarrow ZZ","W' #rightarrow WZ","G_{bulk} #rightarrow WW","Z'#rightarrow WW","Z'#rightarrow ZHbb","W'#rightarrow WHbb","Z'#rightarrow ZHinc","W'#rightarrow WHinc"]
     years = ["2016","2017","2018","Run2"]
     for i in range(len(signals)):
       print i

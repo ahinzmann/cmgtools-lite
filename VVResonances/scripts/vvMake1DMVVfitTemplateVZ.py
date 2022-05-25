@@ -82,14 +82,9 @@ def histoMaker(h,binning,name):
     print xmin,xmax
 
     expo=ROOT.TF1("expo","[0]*(1-x/13000.)^[1]/(x/13000)^[2]",xmin,xmax)
-    expo.SetParameters(0,16.,2.)
-    expo.SetParLimits(2,1.,20.)
-    expo.SetParLimits(1,20.,40.)
-
-    #print " &&&&&&&&&&&&&& commented default function and using 2 parameter function!! &&&&&&&&&&&&&&&&&&&"
-    #expo=ROOT.TF1("expo","[0]/(x/13000)^[1]",xmin,xmax)
-    #expo.SetParameters(0,16.)
-    #expo.SetParLimits(1,1.,20.)
+    #expo.SetParameters(0,16.,2.)                                                                                                                                                       
+    #expo.SetParLimits(2,1.,20.)
+    #expo.SetParLimits(1,20.,40.)
 
     #for 16+17 VH HPHP
     #expo=ROOT.TF1("expo","exp(-x/([0]+[1]*x))",xmin,xmax)
@@ -216,26 +211,6 @@ for folder in folders:
                     print "Using trigger weights from tree"
                 for w in weights_:
                     if w != '': dataPlotters[-1].addCorrectionFactor(w,'branch')
-                corrFactor = 1
-                if filename.find('Z') != -1:
-                    corrFactor = options.corrFactorZ
-                    print "add correction factor for Z+jets sample"
-                if filename.find('W') != -1:
-                    corrFactor = options.corrFactorW
-                    print "add correction factor for W+jets sample"
-                dataPlotters[-1].addCorrectionFactor(corrFactor,'flat') 
-                if filename.find("TT")!=-1:
-                    #we consider ttbar with reweight applyied as nominal!
-                    dataPlotters[-1].addCorrectionFactor('TopPTWeight','tree')
-                if filename.find("W") !=-1 or filename.find('Z') != -1:
-                    print "applying k factors "
-                    dataPlotters[-1].addCorrectionFactor("kfactor",'tree')
-                #if filename.find("W") !=-1 or filename.find('Z') != -1:
-                #    print "applying k factors qcd"
-                #    dataPlotters[-1].addCorrectionFactor("kfactor_qcd",'tree')
-                #if filename.find("W") !=-1 or filename.find('Z') != -1:
-                #    print "applying k factors ew"
-                #    dataPlotters[-1].addCorrectionFactor("kfactor_ew",'tree')
                 
                 dataPlotters[-1].filename=fname
 
@@ -316,7 +291,7 @@ finalHistograms={histogram_nominal.GetName(): histogram_nominal,
 
 for hist in finalHistograms.itervalues():
  # hist.Write(hist.GetName()+"_raw")
- if (options.output).find("Jets")!=-1 and hist.GetName()=="histo_nominal":
+ if (options.output).find("Z")!=-1 and hist.GetName()=="histo_nominal":
      if hist.Integral() > 0:
         if hist.GetName().find("histogram_nominal")!=-1:
             hist.Scale(scale)
@@ -402,13 +377,13 @@ if histogram_pt_up.Integral()!=0 and histogram_pt_down.Integral()!=0 and histogr
     l.AddEntry(histogram_opt_up,"#propto 1/m_{jj}","l")
     l.Draw("same")
 
-    tmplabel = "nonRes"
+    tmplabel = "Res"
     label=options.output.split("_")[1]
     print "label ",label
     
     if 'Jets' in options.output: tmplabel="Jets"
-    if 'W' in options.output: tmplabel="W"+tmplabel
-    if 'Z' in options.output: tmplabel="Z"+tmplabel
+    if 'WZ' in options.output: tmplabel="WZ"+tmplabel
+    if 'ZZ' in options.output: tmplabel="ZZ"+tmplabel
     if 'TT' in options.output: tmplabel="TTbar"
     tmplabel += "_"+label+"_"
     if options.output.find('VV_HPLP')!=-1: tmplabel+='VV_HPLP'

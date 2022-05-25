@@ -59,6 +59,11 @@ for folder in folders:
         mass = float(fname.split('_')[-1])
         if mass < options.minMX or mass > options.maxMX: continue
 
+        # the 2500.0 mass point of the VBF_BulkGravToZZ signal in one of the three year has only a small number of events. It was used in the analysis but here it was tested the effect of removing it.
+        #if mass == 2500.0 and fname.find("VBF_BulkGravToZZ") !=-1:
+        #    continue
+
+
         samples[folder].update({mass : folder+fname})
         print 'found ',folder+fname,' mass',str(mass) 
 
@@ -107,6 +112,8 @@ print "Total lumi ",luminosity_tot
 
 
 #Now we have the samples: Sort the masses and run the fits
+fn=open(options.output+".txt","w")
+fn.write("mass N 1/sqrt(N)*100\n")
 N=0
 for mass in sorted(complete_mass.keys()):
     print "#############    mass ",mass,"       ###########"
@@ -152,7 +159,8 @@ for mass in sorted(complete_mass.keys()):
 
     err=ROOT.Double(0)
     integral=histo.IntegralAndError(1,histo.GetNbinsX(),err) 
-
+    print " mass ",mass," integral ",integral
+    fn.write("%d %f %f \n"%(mass,integral*luminosity_tot,ROOT.TMath.Sqrt(1./(integral*luminosity_tot))*100.))
     yieldgraph.SetPoint(N,mass,integral*options.BR)
     yieldgraph.SetPointError(N,0.0,err*options.BR)
     N=N+1
@@ -160,6 +168,7 @@ for mass in sorted(complete_mass.keys()):
 
 
 
+fn.close()
 if options.function != "spline":
     func = ROOT.TF1("func",options.function,options.min,options.max)
     yieldgraph.Fit(func,"R")

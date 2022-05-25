@@ -81,33 +81,52 @@ if __name__ == "__main__":
             production = ["VBF","gg/DY"]
 
         exp = {}
+        unc = {}
         for prod in production:
             print " production ",prod
             for c in category:
                 print " cat ",c
                 if prod == "VBF": c = "VBF_"+c
                 exp[c] = loadJson(options.inputdir,c,evt,year)
+                if evt == "Observed":
+                    unc[c] = loadJson(options.inputdir,c,"Uncertainty",year)
                 print " non res ",exp[c]["nonRes"]
                 totalTT=0
+                totalTTunc=0
                 for con in contrib:
                     if evt == "Expected":
                         totalTT=totalTT+int(round(exp[c][mappdf[con]]))
                     else:
                         totalTT=totalTT+int(round(exp[c][con]))
+                        print " con ",con,"unc[c][con]",unc[c][con]
+                        totalTTunc=totalTTunc+int(round(unc[c][con]))       #+int(round(unc[c][con]*unc[c][con]))
+                        print "partial TT unc",totalTTunc
                 exp[c]["TTJets"]=totalTT
+                if evt == "Observed": 
+                    unc[c]["TTJets"]=totalTTunc     #ROOT.TMath.Sqrt(totalTTunc)
+                    print "total TTunc",unc[c]["TTJets"]
                 total = 0
+                totalunc=0
                 for b in bkg:
                     total=total+int(round(exp[c][b]))
+                    if evt == "Observed":
+                        totalunc=totalunc+int(round(unc[c][b]*unc[c][b]))
+                totalunc=ROOT.TMath.Sqrt(totalunc)
                 if prod == "VBF":
-                    text_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f  \\\\ \n"%(c.split("_")[1],c.split("_")[2],c.split("_")[0],exp[c]["data"],total,exp[c]["nonRes"],totalTT,exp[c]["Wjets"],exp[c]["Zjets"]))
+                    if evt == "Expected":
+                        text_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f  \\\\ \n"%(c.split("_")[1],c.split("_")[2],c.split("_")[0],exp[c]["data"],total,exp[c]["nonRes"],totalTT,exp[c]["Wjets"],exp[c]["Zjets"]))
+                    else:
+                        text_file.write(" %s %s %s & %.0f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f \\\\ \n"%(c.split("_")[1],c.split("_")[2],c.split("_")[0],exp[c]["data"],total,totalunc,exp[c]["nonRes"],unc[c]["nonRes"],totalTT,unc[c]["TTJets"],exp[c]["Wjets"],unc[c]["Wjets"],exp[c]["Zjets"],unc[c]["Zjets"]))
                     if evt == "Expected":
                         simpletext_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f &%.0f & %.0f & %.0f & %.0f & %.0f & %.0f  \\\\ \n"%(c.split("_")[1],c.split("_")[2],c.split("_")[0],exp[c]["data"],total,exp[c]["nonRes"],exp[c]["Wjets"],exp[c]["Zjets"],totalTT,exp[c]["TTJetsTop"],exp[c]["TTJetsW"],exp[c]["TTJetsNonRes"],exp[c]["TTJetsTNonResT"],exp[c]["TTJetsWNonResT"],exp[c]["TTJetsResWResT"]))
                     else:
                         simpletext_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f &%.0f & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f \\\\ \n"%(c.split("_")[1],c.split("_")[2],c.split("_")[0],exp[c]["data"],total,exp[c]["nonRes"],exp[c]["Wjets"],exp[c]["Zjets"],totalTT,exp[c]["resT"],exp[c]["resW"],exp[c]["nonresT"],exp[c]["resTnonresT"],exp[c]["resWnonresT"],exp[c]["resTresW"]))
 
-
                 else:
-                    text_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f \\\\ \n"%(c.split("_")[0],c.split("_")[1],"DY/gg",exp[c]["data"],total,exp[c]["nonRes"],totalTT,exp[c]["Wjets"],exp[c]["Zjets"]))
+                    if evt == "Expected":
+                        text_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f \\\\ \n"%(c.split("_")[0],c.split("_")[1],"DY/gg",exp[c]["data"],total,exp[c]["nonRes"],totalTT,exp[c]["Wjets"],exp[c]["Zjets"]))
+                    else:
+                        text_file.write(" %s %s %s & %.0f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f & %.0f $\pm$ %0.f \\\\ \n"%(c.split("_")[0],c.split("_")[1],"DY/gg",exp[c]["data"],total,totalunc,exp[c]["nonRes"],unc[c]["nonRes"],totalTT,unc[c]["TTJets"],exp[c]["Wjets"],unc[c]["Wjets"],exp[c]["Zjets"],unc[c]["Zjets"]))
                     if evt == "Expected":
                         simpletext_file.write(" %s %s %s & %.0f & %.0f & %.0f & %.0f & %.0f &%.0f & %.0f & %.0f & %.0f & %.0f & %.0f & %.0f \\\\ \n"%(c.split("_")[0],c.split("_")[1],"DY/gg",exp[c]["data"],total,exp[c]["nonRes"],exp[c]["Wjets"],exp[c]["Zjets"],totalTT,exp[c]["TTJetsTop"],exp[c]["TTJetsW"],exp[c]["TTJetsNonRes"],exp[c]["TTJetsTNonResT"],exp[c]["TTJetsWNonResT"],exp[c]["TTJetsResWResT"]))
                     else:

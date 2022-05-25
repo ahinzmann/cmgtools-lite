@@ -48,6 +48,36 @@ class AllFunctions():
    cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixPars["NP"]["pol"])
    os.system(cmd)
 
+ def makeSignalShapesMVV_cat(self,filename,template,fixParsMVV,addcuts="1"):
+  for cat in self.categories:
+   if 'VBF' in template: cut='*'.join([self.cuts['common_VBF'],self.cuts['acceptanceMJ'],self.cuts[cat],addcuts])
+   else: cut='*'.join([self.cuts['common_VV'],self.cuts['acceptanceMJ'],self.cuts[cat],addcuts])
+   ##the parameters to be fixed should be optimized
+   rootFile=filename+"_MVV_"+cat+".root"
+   fixPars = fixParsMVV["fixPars"]
+   cmd='vvMakeSignalMVVShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_LV_mass" --fix "{fixPars}"   -m {minMVV} -M {maxMVV} --minMX {minMX} --maxMX {maxMX} {samples} --addcut "{addcut}"  '.format(template=template,cut=cut,rootFile=rootFile,minMVV=self.minMVV,maxMVV=self.maxMVV,minMX=self.minMX,maxMX=self.maxMX,fixPars=fixPars,samples=self.samples,addcut=addcuts,binsMVV=self.HCALbinsMVV)
+   print cmd
+   os.system(cmd)
+   jsonFile=filename+"_MVV_"+cat+".json"
+   cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixParsMVV["pol"])
+   print "########## Going to make json ######"
+   print cmd
+   os.system(cmd)
+
+
+ def makeSignalShapesMJ_cat(self,filename,template,leg,fixPars,addcuts="1"):
+  for cat in self.categories:
+   cut = '*'.join([self.cuts['common'],addcuts,self.cuts[cat]])
+
+   rootFile=filename+"_MJ"+leg+"_"+cat+".root"
+   cmd='vvMakeSignalMJShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_{leg}_softDrop_mass" -m {minMJ} -M {maxMJ} -f "{fixPars}" --minMX {minMX} --maxMX {maxMX} {samples} '.format(template=template,cut=cut,rootFile=rootFile,leg=leg,minMJ=self.minMJ,maxMJ=self.maxMJ,minMX=self.minMX,maxMX=self.maxMX,fixPars=fixPars["NP"]["fixPars"],samples=self.samples)
+   os.system(cmd)
+
+   jsonFile=filename+"_MJ"+leg+"_"+cat+".json"
+   cmd='vvMakeJSON.py  -o "{jsonFile}" -g {pols} -m {minMX} -M {maxMX} {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile,minMX=self.minMX,maxMX=self.maxMX,pols=fixPars["NP"]["pol"])
+   os.system(cmd)
+
+
  def makeSignalYields(self,filename,template,branchingFraction,functype="pol5",doTau=False):
   
   for c in self.categories:
@@ -108,6 +138,8 @@ class AllFunctions():
    command = "vvMake1DMVVTemplateVjets.py"
   if (name.find("WJets")!=-1 or name.find("ZJets")!=-1) and doFitTempl==True:
    command = "vvMake1DMVVfitTemplateVjets.py"
+  if (name.find("WZ")!=-1 or name.find("ZZ")!=-1) and doFitTempl==True:
+   command = "vvMake1DMVVfitTemplateVZ.py"
   print command
 
   pwd = os.getcwd()
@@ -424,7 +456,31 @@ class AllFunctions():
      print str(cmd)
      os.system(cmd)
 
- def fitTT(self,filename,template,xsec=1):
+ def fitVZJets(self,filename,template,leg,fixPars,addcuts="1"):
+   for c in self.categories:
+     if 'VBF' in c: cut='*'.join([self.cuts['common_VBF'],self.cuts[c.replace('VBF_','')],self.cuts['acceptance']])
+     else: cut='*'.join([self.cuts['common_VV'],self.cuts[c],self.cuts['acceptance']])
+     rootFile=filename+"_MJ"+leg+"_NP.root"
+     pwd = os.getcwd()
+     folders=[]
+     folders= self.samples.split(',')
+     directory= ""
+     for s in folders:
+      directory+=pwd +"/"+s
+      if s != folders[-1]: directory+=","
+      print "Using files in" , directory
+
+     print self.cuts["acceptance"]
+     fixPars="1"  #"n:0.8,alpha:1.9"
+     #fixPars=fixPars["NP"]["fixPars"]
+     cmd='vvMakeVZShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_{leg}_softDrop_mass"  -m {minMJ} -M {maxMJ} -f "{fixPars}"  --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} {samples} '.format(template=template,cut=cut,rootFile=rootFile,leg=leg,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity="NP",minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",samples=directory,fixPars=fixPars)
+     cmd+=self.HCALbinsMVV
+     print "going to execute command: "
+     print str(cmd)
+     os.system(cmd)
+
+
+ def fitTT(self,filename,template,xsec=1,prelim="prelim"):
    for c in self.categories:
      print("\r"+"Fitting ttbar in category %s for template %s" %(c,template))
      if 'VBF' in c: 
@@ -442,7 +498,7 @@ class AllFunctions():
      print "Using files in" , directory
 
      fixPars="1" 
-     cmd='vvMakeTTShapes.py -s "{template}" -c "{cut}"  -o "{outname}" -m {minMJ} -M {maxMJ} --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} --corrFactor {xsec} {samples}'.format(template=template,cut=cut,outname=outname,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity=c,minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",xsec=xsec, samples=directory)
+     cmd='vvMakeTTShapes.py -s "{template}" -c "{cut}"  -o "{outname}" -m {minMJ} -M {maxMJ} --store "{filename}_{purity}.py" --minMVV {minMVV} --maxMVV {maxMVV} {addOption} --corrFactor {xsec} {samples} --prelim {prelim}'.format(template=template,cut=cut,outname=outname,minMJ=self.minMJ,maxMJ=self.maxMJ,filename=filename,purity=c,minMVV=self.minMVV,maxMVV=self.maxMVV,addOption="",xsec=xsec, samples=directory, prelim=prelim)
      cmd+=self.HCALbinsMVV
      os.system(cmd)
      

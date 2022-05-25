@@ -141,7 +141,7 @@ inFileName = options.file
 massPoints = [1200,1400,1600,1800,2000,2500,3000,3500,4000,4500,5000,5500,6000]
 postfix = "Jet 1 "
 if options.leg == "l2" !=-1: postfix = "Jet 2 "
-varName = {'mVV':'Dijet invariant mass [GeV]','mJ':'%sJet mass [GeV]'%postfix}
+varName = {'mVV':'Dijet invariant mass [GeV]','mJ':'mass_{%s} [GeV]'%postfix}
 varBins = {'mVV':'[40,1000,6500]','mJ':'[80,55,215]'}
 #w=ROOT.RooWorkspace("w","w")
 #w.factory(options.var+varBins[options.var])
@@ -361,6 +361,14 @@ def doAll(category,jsons,legs):
         c1.SaveAs(outname+".pdf")
         c1.SaveAs(outname+".C")
         c1.SaveAs(outname+".root")
+    elif options.prelim=="2":
+      outname=path+"signalShapes"+vbfsig+"_%s_%s_%s_All_%s_thesis" %(options.var,category,options.year,options.name)
+      cmslabel_thesis(c1,'sim',11)
+      c1.Update()
+      c1.SaveAs(outname+".png")
+      c1.SaveAs(outname+".pdf")
+      c1.SaveAs(outname+".C")
+      c1.SaveAs(outname+".root")
     else:
         cmslabel_sim(c1,'sim',11)
         c1.Update()

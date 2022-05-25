@@ -69,7 +69,7 @@ print "folders ",folders
 for folder in folders:
     print "folder ",folder
     print "split ",folder.split("/")
-    year=folder.split("/")[1]
+    year=folder.split("/")[-2]
     print "year ",year
     print "now working with cuts "
     ctx = cuts.cuts("init_VV_VH.json",year,"dijetbins_random")

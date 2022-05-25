@@ -54,7 +54,8 @@ def getMJPdf(mvv_min,mvv_max,MH,postfix="",fixPars="1"):
 
         mean        = ROOT.RooRealVar("mean_%d%s"%(MH,postfix),"mean_%d%s"%(MH,postfix),MH ,0.8*MH,1.2*MH)
         sigma       = ROOT.RooRealVar("sigma_%d%s"%(MH,postfix),"sigma_%d%s"%(MH,postfix),MH*0.05,MH*0.02,MH*0.10)
-        alpha       = ROOT.RooRealVar("alpha_%d%s"%(MH,postfix),"alpha_%d%s"%(MH,postfix),1.2,0.0,18)
+        alpha       = ROOT.RooRealVar("alpha_%d%s"%(MH,postfix),"alpha_%d%s"%(MH,postfix),1.,0.0,2)
+        #alpha       = ROOT.RooRealVar("alpha_%d%s"%(MH,postfix),"alpha_%d%s"%(MH,postfix),1.2,0.0,18)
         alpha2      = ROOT.RooRealVar("alpha2_%d%s"%(MH,postfix),"alpha2_%d%s"%(MH,postfix),1.2,0.0,10)
         sign        = ROOT.RooRealVar("sign_%d%s"%(MH,postfix),"sign_%d%s"%(MH,postfix),5,0,600)
         sign2        = ROOT.RooRealVar("sign2_%d%s"%(MH,postfix),"sign2_%d%s"%(MH,postfix),5,0,50)  
@@ -101,9 +102,9 @@ def chooseBin(sample,b,binmidpoint):
         if b > 55+2*binmidpoint: b = 120
         return b
     
-def dodCBFits(h1,mass,prefix,fixpars):
-    
-    func,var,params = getMJPdf(1126,5000,mass,options.sample,fixpars)
+def dodCBFits(h1,mass,prefix,fixpars,min_mvv=1246.,max_mvv=7600.):
+
+    func,var,params = getMJPdf(min_mvv,max_mvv,mass,options.sample,fixpars)
     data1 = ROOT.RooDataHist("dh","dh", ROOT.RooArgList(var), ROOT.RooFit.Import(h1)) 
     
     
@@ -167,6 +168,10 @@ for folder in folders:
     
         mass = float(fname.split('_')[-1])
         if mass < options.minMX or mass > options.maxMX: continue
+
+        # the 2500.0 mass point of the VBF_BulkGravToZZ signal in one of the three year has only a small number of events. It was used in the analysis but here it was tested the effect of removing it.
+        #if mass == 2500.0 and fname.find("VBF_BulkGravToZZ") !=-1:
+        #    continue
         
 
         samples[folder].update({mass : folder+fname})
@@ -336,7 +341,7 @@ for mass in sorted(complete_mass.keys()):
         proj = histos2D.ProjectionX("p")
        
         hall = histos3D.ProjectionZ("all",0,binmidpoint,binmidpoint,binsmjet)
-        par = dodCBFits(hall,mass,"all","1")
+        par = dodCBFits(hall,mass,"all","1",options.min,options.max)
         mean = par["MEAN"] 
         sigma = par["SIGMA"] 
         print " mean " +str(mean)
@@ -345,7 +350,7 @@ for mass in sorted(complete_mass.keys()):
           for bins2 in bins_all:
             ps .append( histos3D.ProjectionZ("p2"+str(n+1),bins[0],bins[1],bins2[0],bins2[1]))
             
-            par = dodCBFits(ps[-1],mass,str(n+1),"1")
+            par = dodCBFits(ps[-1],mass,str(n+1),"1",options.min,options.max)
             b1 = proj.GetBinCenter(bins[0])+ (proj.GetBinCenter(bins[1])-proj.GetBinCenter(bins[0]))/2. 
             b2 = proj.GetBinCenter(bins2[0])+ (proj.GetBinCenter(bins2[1])-proj.GetBinCenter(bins2[0]))/2.
             b1 = chooseBin(options.sample,b1,binmidpoint)
@@ -373,6 +378,7 @@ for mass in sorted(complete_mass.keys()):
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save()])
     
     fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png",roobins)
+    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".C",roobins)
 
     for var,graph in graphs.iteritems():
         value,error=fitter.fetch(var)

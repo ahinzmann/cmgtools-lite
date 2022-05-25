@@ -30,20 +30,19 @@ parser.add_option("-m","--min",dest="mini",type=float,help="min MJJ",default=40)
 parser.add_option("-M","--max",dest="maxi",type=float,help="max MJJ",default=160)
 parser.add_option("-e","--exp",dest="doExp",type=int,help="useExponential",default=0)
 parser.add_option("-f","--fix",dest="fixPars",help="Fixed parameters",default="1")
-parser.add_option("-r","--minMX",dest="minMX",type=float, help="smallest Mx to fit ",default=1000.0)
-parser.add_option("-R","--maxMX",dest="maxMX",type=float, help="largest Mx to fit " ,default=7000.0)
+parser.add_option("-r","--minMVV",dest="minMx",type=float, help="smallest Mx to fit ",default=1000.0)
+parser.add_option("-R","--maxMVV",dest="maxMx",type=float, help="largest Mx to fit " ,default=7000.0)
 parser.add_option("-t","--triggerweight",dest="triggerW",action="store_true",help="Use trigger weights",default=False)
-
+parser.add_option("--store",dest="store",type=str,help="store fitted parameters in this file",default="")
+parser.add_option("--binsMVV",dest="binsMVV",help="use special binning",default="")
 (options,args) = parser.parse_args()
 #define output dictionary
 
-isVH = False
-isHH = False
 samples={}
 
 folders = str(args[0]).split(",")
 for folder in folders:
-    samples[folder] = {}
+    samples[folder] = []
     for filename in os.listdir(folder):
         if not (filename.find(options.sample)!=-1):
             continue
@@ -59,56 +58,14 @@ for folder in folders:
         ext=fnameParts[1]
         if ext.find("root") ==-1:
             continue
+        name = fname.split('_')[0]
+        samples[folder].append(folder+fname)
+        
+        print 'found',filename, " and stored in ",samples[folder]
             
-        mass = float(fname.split('_')[-1])
-        if mass < options.minMX or mass > options.maxMX: continue	
-
-        # the 2500.0 mass point of the VBF_BulkGravToZZ signal in one of the three year has only a small number of events. It was used in the analysis but here it was tested the effect of removing it.
-        #if mass == 2500.0 and fname.find("VBF_BulkGravToZZ") !=-1:
-        #    continue
-
-        samples[folder].update({mass : folder+fname})
-
-        print 'found',filename,'mass',str(mass) 
-        if filename.find('hbb')!=-1 or filename.find('hinc')!=-1: isVH=True;
-        if filename.find("HH")!=-1: isHH=True; 
 
 
 leg = options.mvv.split('_')[1]
-graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors(),
-        'meanH':ROOT.TGraphErrors(),'sigmaH':ROOT.TGraphErrors(),'alphaH':ROOT.TGraphErrors(),'nH':ROOT.TGraphErrors(),'fH':ROOT.TGraphErrors(),'slopeH':ROOT.TGraphErrors(),'alpha2H':ROOT.TGraphErrors(),'n2H':ROOT.TGraphErrors() }
-
-
-flipped = defaultdict(dict)
-for key, val in samples.items():
-    for subkey, subval in val.items():
-        flipped[subkey][key] = subval
-
-
-
-complete_mass = defaultdict(dict)
-for mass in flipped.keys():
-    print mass
-    if options.sample == "WprimeToWhToWhadhinc_" and mass == 1400.0 and options.output.find("Vjet") != -1:
-        print " skipping WprimeWH at 1.4 TeV when doing the Vjet because for no clear reason its sigma explodes! "
-        continue
-    i= 0
-    for folder in folders:
-        try:
-            x = flipped[mass][folder]
-            print " x ", x
-            i+=1
-        except KeyError:
-            print "!!!!    folder ", folder, " missing for mass", mass ," !!!!!!!!"
-            pass
-    print i
-    if i == len(folders):
-        for folder in folders:
-            x = flipped[mass][folder]
-            complete_mass[mass][folder] = x
-
-
-print " complete ",complete_mass
 
 
 if options.output.find('NP')!=-1:
@@ -118,16 +75,15 @@ else:
 print "category ",category
 
 mvv,maxi,mini = options.mvv,options.maxi,options.mini
+plotter=[]
+names = []
+for files in samples.keys():
+    for f in samples[files]:
+        print " samples name ",f
+        histo = None
 
-#Now we have the samples: Sort the masses and run the fits
-N=0
-for mass in sorted(complete_mass.keys()):
-    print "#############    mass ",mass,"       ###########"
-    
-    histo = None
-    plotter = []
-    for folder in sorted(complete_mass[mass].keys()):
-        year=folder.split("/")[-2]
+        print " samples name ",f
+        year=f.split("/")[-2]
         print "year ",year
         ctx = cuts.cuts("init_VV_VH.json",year,"dijetbins_random")
         luminosity = 1 #ctx.lumi[year]/ctx.lumi["Run2"]
@@ -138,16 +94,16 @@ for mass in sorted(complete_mass.keys()):
             luminosity = ctx.lumi[year]/ctx.lumi["Run2"]
             print "ctx.lumi[year]/ctx.lumi['Run2'] "
         print " fraction of lumi ",luminosity
-        plotter.append(TreePlotter(complete_mass[mass][folder]+'.root','AnalysisTree'))
-        if year == "2016": plotter[-1].addCorrectionFactor('genWeight','tree')
-        else :
-            print "using LO weight to avoid negative weights!"
-            plotter[-1].addCorrectionFactor('genWeight_LO','tree')
-        plotter[-1].addCorrectionFactor(luminosity,'flat')
+
+        plotter.append(TreePlotter(f+'.root','AnalysisTree'))
+        plotter[-1].setupFromFile(f+'.pck')
+        plotter[-1].addCorrectionFactor('xsec','tree')
+        plotter[-1].addCorrectionFactor('genWeight','tree')
         plotter[-1].addCorrectionFactor('puWeight','tree')
-        if options.triggerW:
-            plotter[-1].addCorrectionFactor('jj_triggerWeight','tree')
-            print "Using triggerweight"
+        plotter[-1].addCorrectionFactor(luminosity,'flat')
+        if options.triggerW: plotters[-1].addCorrectionFactor('triggerWeight','tree')
+        names.append(f)
+
 
         print "ATTENTION: "+str(mvv)
         if mvv.find("l1")!=-1 or mvv.find("l2")!=-1:
@@ -166,9 +122,7 @@ for mass in sorted(complete_mass.keys()):
 
     
     fitter=Fitter(['x'])
-    if isVH and options.cut.find('Truth')==-1: fitter.jetDoublePeakVH('model','x'); print "INFO: fit jet double peak";
-    if (not isVH and not isHH) or (options.cut.find('VTruth')!=-1 and options.cut.find('VVTruth') ==-1): fitter.jetResonanceNOEXP('model','x'); print "INFO: fit jetmass no exp ";
-    if (isVH and options.cut.find('HbbTruth')) or isHH: fitter.jetResonanceHiggs('model','x'); print "INFO: fit jetResonanceHiggs";
+    fitter.jetResonanceNOEXP('model','x'); print "INFO: fit jetmass no exp ";
     
     if options.fixPars!="1":
         fixedPars =options.fixPars.split(',')
@@ -181,20 +135,23 @@ for mass in sorted(complete_mass.keys()):
     fitter.importBinnedData(histo,['x'],'data')
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Save()])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Minos(1),ROOT.RooFit.Save()])
-    fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+"_"+str(mass)+".png")
-    fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+"_"+str(mass)+".C")
+    fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+".png")
+    fitter.projection("model","data","x","debugJ"+leg+"_"+options.output+".C")
+    params = {}
+    params["Res_"+leg]={"mean": {"val": fitter.w.var("mean").getVal(), "err": fitter.w.var("mean").getError()}, "sigma": {"val": fitter.w.var("sigma").getVal(), "err": fitter.w.var("sigma").getError()}, "alpha":{ "val": fitter.w.var("alpha").getVal(), "err": fitter.w.var("alpha").getError()},"alpha2":{"val": fitter.w.var("alpha2").getVal(),"err": fitter.w.var("alpha2").getError()},"n":{ "val": fitter.w.var("n").getVal(), "err": fitter.w.var("n").getError()},"n2": {"val": fitter.w.var("n2").getVal(), "err": fitter.w.var("n2").getError()}
+}
 
-    for var,graph in graphs.iteritems():
-        value,error=fitter.fetch(var)
-        graph.SetPoint(N,mass,value)
-        graph.SetPointError(N,0.0,error)
-                
-    N=N+1
+
+    #fitter.drawVjets(options.sample+"_mjetRes_NP_"+period+".pdf",histos,histos_nonRes,scales,scales_nonRes)
+
+    if options.store!="":
+        print "write to file "+options.store
+        f=open(options.store,"w")
+        for par in params:
+            f.write(str(par)+ " = " +str(params[par])+"\n")
+
+
+
     fitter.delete()
         
-F=ROOT.TFile(options.output,"RECREATE")
-F.cd()
-for name,graph in graphs.iteritems():
-    graph.Write(name)
-F.Close()
             

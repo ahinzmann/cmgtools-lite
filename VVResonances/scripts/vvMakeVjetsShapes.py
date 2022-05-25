@@ -89,6 +89,7 @@ def doFit(fitter,histo,histo_nonRes,label,leg=''):
   fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Save(1),ROOT.RooFit.Range(55,120)]) #55,140 works well with fitting only the resonant part
  #ROOT.RooFit.Minos(ROOT.kTRUE)
   fitter.projection("model","data","x","debugJ"+leg+"_"+label+"_Res.pdf",0,False,"m_{jet}")
+  fitter.projection("model","data","x","debugJ"+leg+"_"+label+"_Res.C",0,False,"m_{jet}")
   
   
   c= getCanvas(label)
@@ -103,6 +104,7 @@ def doFit(fitter,histo,histo_nonRes,label,leg=''):
   text = ROOT.TLatex()
   text.DrawLatexNDC(0.13,0.92,"#font[62]{CMS} #font[52]{Simulation}")
   c.SaveAs("debugJ"+leg+"_"+label+"_nonRes.pdf")
+  c.SaveAs("debugJ"+leg+"_"+label+"_nonRes.C")
   
   
   

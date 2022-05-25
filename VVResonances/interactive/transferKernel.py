@@ -725,26 +725,27 @@ def makeNonResCard():
   hname = 'histo'
  fin.Close() 
  print "adding shapes bkg"
- card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf,'TurnOn:CMS_VV_JJ_nonRes_TurnOn_'+category_pdf],False,0)
- #card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['PT:CMS_VV_JJ_nonRes_PT_'+category_pdf,'OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf,'TurnOn:CMS_VV_JJ_nonRes_TurnOn_'+category_pdf],False,0)
+ #card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf,'TurnOn:CMS_VV_JJ_nonRes_TurnOn_'+category_pdf],False,0)
+ #card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf],False,0)
+ card.addHistoShapeFromFile("nonRes",["MJ1","MJ2","MJJ"],options.pdfIn,hname,['PTZ:CMS_VV_JJ_nonRes_PTZ_'+category_pdf,'OPTXY:CMS_VV_JJ_nonRes_OPTXY_'+category_pdf,'OPTZ:CMS_VV_JJ_nonRes_OPTZ_'+category_pdf,'TurnOn:CMS_VV_JJ_nonRes_TurnOn_'+category_pdf],False,0)
  print "adding yield"
  card.addFixedYieldFromFile("nonRes",1,options.input,"nonRes",1)
  print "adding data"
  DTools.AddData(card,options.input,"nonRes",lumi[dataset] )
  print "adding sig sys for purity", purity
- DTools.AddSigSystematics(card,sig,dataset,purity,0,"0")
+ DTools.AddOneSigSystematics(card,sig,dataset,purity,0,"0","results_"+dataset)
 
  print "Adding systematics to card"
  print "norm"
  card.addSystematic("CMS_VV_JJ_nonRes_norm","lnN",{'nonRes':1.5}) 
  print "OPTZ"
- card.addSystematic("CMS_VV_JJ_nonRes_OPTZ_"+category_pdf,"param",[0.,2.]) #1,2
+ card.addSystematic("CMS_VV_JJ_nonRes_OPTZ_"+category_pdf,"param",[0.,2.]) #[0.,2.])
  print "OPTXY"
  card.addSystematic("CMS_VV_JJ_nonRes_OPTXY_"+category_pdf,"param",[0.,2.]) #0,2
  print "TurnOn"
  card.addSystematic("CMS_VV_JJ_nonRes_TurnOn_"+category_pdf,"param",[1.,2.]) #test for VH_HPHP
- #print "PT"
- #card.addSystematic("CMS_VV_JJ_nonRes_PT_"+category_pdf,"param",[0.0,0.333]) #orig
+ print "PTZ"
+ card.addSystematic("CMS_VV_JJ_nonRes_PTZ_"+category_pdf,"param",[0.0,2.]) #orig
   
  
 
