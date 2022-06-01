@@ -679,10 +679,15 @@ class Postfitplotter():
           hdata.GetZaxis().SetTitle("Events   ")
           histos[0] = self.fromGeVtoTeV(histos[0])
           histos[0].GetXaxis().SetRangeUser(1.246,6.)
-          histos[0].GetXaxis().SetLabelSize(0.06)
-          histos[0].GetXaxis().SetTitleOffset(1.0)
+          histos[0].GetXaxis().SetTitleOffset(1.1)
           histos[0].GetXaxis().SetNdivisions(505, True);
           histos[0].GetYaxis().SetNdivisions(505, True);
+          histos[0].GetXaxis().SetTitleSize(0.05)
+          histos[0].GetXaxis().SetLabelSize(0.05)
+          histos[0].GetYaxis().SetTitleSize(0.05)
+          histos[0].GetYaxis().SetLabelSize(0.05)
+          histos[0].GetZaxis().SetTitleSize(0.05)
+          histos[0].GetZaxis().SetLabelSize(0.05)
           hdata.GetZaxis().SetTitleOffset(0.6)
           histos[0].Draw('cont3')
           histos[0].SetContour(5)
@@ -884,7 +889,7 @@ class Postfitplotter():
             print " &&&&&&&& else-> b only "
             leg.AddEntry(histos[0],"Background fit","l")
         histos[0].Write("BackgroundFit")
-        if errors!=None:
+        if errors!=None and axis!="xz":
             leg.AddEntry(errors[0],"#pm 1#sigma unc.","f")
             errors[0].Write("syst_unc")
             #to have the syst errors centered around zero (to be able to plot a nice pulls band) & rescaled by the stats unc.
