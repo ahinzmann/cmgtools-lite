@@ -155,7 +155,7 @@ if __name__=="__main__":
      #workspace.Print()
      model = workspace.pdf("model_b")
      model_b = workspace.pdf("model_b")
-     if options.fitSignal: model = workspace.pdf("model_s")
+     if options.fitSignal or options.plotbonly==False: model = workspace.pdf("model_s")
      data_all = workspace.data("data_obs")
      args  = model_b.getComponents()
      if options.fitSignal and options.plotbonly==False:
@@ -238,7 +238,7 @@ if __name__=="__main__":
          allpdfs[period][-1].Print()
          #allpdfs[period][-1].funcList().Print()
          #allpdfs[period][-1].coefList().Print()
-     if options.fitSignal and options.plotbonly == False:
+     if options.plotbonly == False:
             allsignalpdfs[period] = args["shapeSig_"+signalName+"_JJ_"+purity+"_13TeV_"+period]
      elif options.fitSignal and options.plotbonly == True:
             allsignalpdfs[period] = sig_args["shapeSig_"+signalName+"_JJ_"+purity+"_13TeV_"+period]
@@ -460,6 +460,15 @@ if __name__=="__main__":
          if options.fitSignal: fr = fitted_r
          forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both,fr,binwidth)
 
+     #make projections onto MJJ and MJ1 axis 
+     if options.projection =="xz":
+         results = []
+         res = forproj.doProjection(data[period],allpdfsz[period],all_expected[period],"xz",allsignalpdfs[period],signal_expected[period],showallTT,options.plotbonly)
+         if options.fitSignal and options.plotbonly == False: workspace.var("r").setVal(fitted_r)
+         fr = 0
+         if options.fitSignal: fr = fitted_r
+         if not options.fitSignal and options.plotbonly == False: fr = 1 # inject signal
+         forplotting.MakePlots(res[0],res[1],res[2],res[3],res[4],res[5], res[6],res[7],options.pseudo,options.both,fr)
 
 
      #make projections of both jet masses - projection b should be combined with option both

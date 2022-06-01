@@ -604,6 +604,17 @@ class Postfitplotter():
             if self.options.blind == True and len(xrange.split(',')) == 4:
                 extra1 = 'Blind '+xhigh+' < m^{AK8}_{jet1} < '+xlow2+' GeV'  #extra1 = xlow+' < m^{AK8}_{jet1} < '+xhigh+' & '+xlow2+' < m^{AK8}_{jet1} < '+xhigh2+' GeV'
             extra2 = zrange.split(',')[0]+' < m^{AK8}_{jj} < '+ zrange.split(',')[1]+' TeV'
+        elif axis=='xz':
+            print "make XZ projection"
+            htitle = "XZ-Proj. y : "+self.options.yrange
+            hhtitle = self.options.channel
+            xtitle = "m^{AK8}_{jj} [TeV]"
+            ytitle = " m^{AK8}_{jet1} [GeV]"
+            ymin = 0.2
+            ymax = max(hdata.GetMaximum(),maxY)
+            extra2 = yrange.split(',')[0]+' < m^{AK8}_{jet2} < '+ yrange.split(',')[1]+' GeV'
+            if self.options.blind == True and len(yrange.split(',')) == 4:
+                extra2 = 'Blind '+yhigh+' < m^{AK8}_{jet2} < '+ylow2+' GeV'  #extra2 = ylow+' < m^{AK8}_{jet2} < '+yhigh+' & '+ylow2+' < m^{AK8}_{jet2} < '+yhigh2+' GeV'
         elif axis=='b':
             print "make X+Y projection"
             htitle = "XY-Proj. x : "+self.options.xrange+" y  : "+self.options.yrange+" z : "+self.options.zrange
@@ -624,15 +635,25 @@ class Postfitplotter():
         #leg = ROOT.TLegend(0.450436242,0.5531968,0.7231544,0.8553946)
         #leg = ROOT.TLegend(0.55809045,0.3063636,0.7622613,0.8520979)
         leg = ROOT.TLegend(0.5,0.45,0.82,0.88)
+        if axis == 'xz':
+          leg = ROOT.TLegend(0.46,0.52,0.65,0.72)
         leg.SetTextSize(0.045)
+        if axis=='xz':
+          leg.SetTextSize(0.04)
         leg.SetFillStyle(0)
         leg.SetLineWidth(0)
         c = self.get_canvas('c')
         pad1 = self.get_pad("pad1") #ROOT.TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
         if axis == 'z': pad1.SetLogy()
+        if axis == 'xz':
+          c.SetLeftMargin( 0.17 )
+          c.SetRightMargin( 0.15 )
+          c.SetBottomMargin( 0.14 )
+          pad1=c
+          pad1.SetLogz()
 
         pad1.Draw()
-        pad1.cd()	 
+        pad1.cd()         
         outfile = ROOT.TFile.Open(self.options.output+"Histos"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".root","RECREATE");
     
         histos[0].SetMinimum(ymin)
@@ -652,20 +673,42 @@ class Postfitplotter():
             histos[0].GetXaxis().SetRangeUser(1.246,6.)
         histos[0].GetYaxis().SetTitleSize(0.06)
         histos[0].GetYaxis().SetLabelSize(0.06)
-        histos[0].Draw('HIST')
+        if axis == 'xz':
+          histos[0].GetYaxis().SetTitle(ytitle)
+          hdata = self.fromGeVtoTeV(hdata)
+          hdata.GetZaxis().SetTitle("Events   ")
+          histos[0] = self.fromGeVtoTeV(histos[0])
+          histos[0].GetXaxis().SetRangeUser(1.246,6.)
+          histos[0].GetXaxis().SetLabelSize(0.06)
+          histos[0].GetXaxis().SetTitleOffset(1.0)
+          histos[0].GetXaxis().SetNdivisions(505, True);
+          histos[0].GetYaxis().SetNdivisions(505, True);
+          hdata.GetZaxis().SetTitleOffset(0.6)
+          histos[0].Draw('cont3')
+          histos[0].SetContour(5)
+          #ROOT.gStyle.SetPalette(ROOT.kGreyScale)
+          #ROOT.gStyle.SetPalette(ROOT.kCoffee)
+          ROOT.gStyle.SetPalette(ROOT.kLake)
+          ROOT.TColor.InvertPalette()
+          hdata.Draw("colzsame") # Draw data first
+          hdata.SetContour(100)
+          ymin,ymax = 0.8,hdata.GetMaximum()*1.2
+          hdata.GetZaxis().SetRangeUser(ymin, ymax)
+        else:
+          histos[0].Draw('HIST')
         print "---------------------------------------------------------------------------------------"
         print histos[0].Integral()
         print "---------------------------------------------------------------------------------------"
 
         if len(histos)>1:
             #QCD
-            if axis == 'z':
+            if axis == 'z' or axis == 'xz':
                 histos[1]= self.fromGeVtoTeV(histos[1])
             histos[1].SetLineColor(self.colors[1])
             histos[1].SetLineWidth(2)
 
             #V+jets
-            if axis == 'z':
+            if axis == 'z' or axis == 'xz':
                 histos[2]= self.fromGeVtoTeV(histos[2])
                 histos[3]= self.fromGeVtoTeV(histos[3])
 
@@ -679,7 +722,7 @@ class Postfitplotter():
                 histos[4].SetLineColor(self.colors[4])
                 histos[4].SetLineWidth(2)
                 histos[4].SetLineStyle(3)
-                if axis == 'z':
+                if axis == 'z' or axis == 'xz':
                     histos[4] =self.fromGeVtoTeV(histos[4])
 
             if self.options.addDIB:
@@ -687,16 +730,20 @@ class Postfitplotter():
                 histos[5].SetLineWidth(2)
                 histos[6].SetLineColor(self.colors[6])
                 histos[6].SetLineWidth(2)
-                if axis == 'z':
+                if axis == 'z' or axis == 'xz':
                     histos[5] = self.fromGeVtoTeV(histos[5])
                     histos[6]= self.fromGeVtoTeV(histos[6])
         #ttbar components
         for i in range(5,len(histos)):
             histos[i].SetLineColor(self.colors[i])
-            if axis == 'z':
+            if axis == 'z' or axis == 'xz':
                 histos[i] = self.fromGeVtoTeV(histos[i])
-
-            histos[i].Draw("histsame")
+            if axis == 'xz':
+              #histos[i].Draw("cont3same")
+              histos[i].SetContour(1)
+              histos[i].GetZaxis().SetRangeUser(ymin, ymax)
+            else:
+              histos[i].Draw("histsame")
             name = histos[i].GetName().split("_")
 
             #if len(name)>2:
@@ -711,7 +758,7 @@ class Postfitplotter():
             hdata = self.fromGeVtoTeV(hdata)
 
         if errors!=None:
-            if axis == 'z':
+            if axis == 'z' or axis == 'xz':
                 errors[0] = self.fromGeVtoTeVGraph(errors[0])
             errors[0].SetFillColor(self.colors[0])
             errors[0].SetFillStyle(3001)
@@ -728,7 +775,7 @@ class Postfitplotter():
         
         if hsig!= None: # and (self.options.name.find('sigonly')!=-1  and doFit==0):
             print "print do hsignal, that has integral ", hsig.Integral()
-            if axis == 'z':
+            if axis == 'z' or axis == 'xz':
                 hsig = self.fromGeVtoTeV(hsig)
             hsig.Write(self.signalName)
             if hsig.Integral()!=0. and scaling !=0 :   
@@ -741,31 +788,70 @@ class Postfitplotter():
             hsig.SetLineColor(ROOT.kBlack)
             hsig.SetLineStyle(1)
             #hsig.SetTitle("category  "+self.options.channel)
-            hsig.Draw("HISTsame")
+            if axis == 'xz':
+              hsig.SetContour(1)
+              hsig.Draw("cont3same")
+              hsig.GetZaxis().SetRangeUser(hsig.GetMaximum()/4,hsig.GetMaximum())
+              hsig.SetLineColor(ROOT.kGreen+3)
+              hsig.SetLineWidth(2)
+              hsig.SetLineStyle(2)
+            else:
+              hsig.Draw("HISTsame")
             #leg.AddEntry(hsig,"Signal pdf","F")
         #errors[0].Draw("E5same")
         if errors!=None:
-            if axis=="z":
+            if axis=='xz':
+              pass
+            elif axis=="z":
                 errors[0].Draw("2same")
             else:
                 errors[0].Draw("3same")
         histos[0].SetTitle("category  "+self.options.channel)
-        histos[0].Draw("samehist")
+        if not axis=='xz':
+          histos[0].Draw("samehist")
         if len(histos)>1:
-            if self.options.addTop: histos[4].Draw("histsame")
+            if self.options.addTop:
+              if axis == 'xz':
+                #histos[4].Draw("cont3same")
+                histos[4].SetContour(5)
+                histos[4].GetZaxis().SetRangeUser(ymin, ymax)
+              else:
+                histos[4].Draw("histsame")
             histos[1].SetLineStyle(2)
             histos[2].SetLineStyle(7)
             histos[3].SetLineStyle(6)
-            if "ttbar" not in self.options.output: histos[1].Draw("histsame")
-            if "ttbar" not in self.options.output: histos[2].Draw("histsame")
-            if "ttbar" not in self.options.output: histos[3].Draw("histsame")
+            if "ttbar" not in self.options.output:
+              if axis == 'xz':
+                #histos[1].Draw("cont3same")
+                histos[1].SetContour(5)
+                histos[1].GetZaxis().SetRangeUser(ymin, ymax)
+              else:
+                histos[1].Draw("histsame")
+            if "ttbar" not in self.options.output:
+              if axis == 'xz':
+                #histos[2].Draw("cont3same")
+                histos[2].SetContour(5)
+                histos[2].GetZaxis().SetRangeUser(ymin, ymax)
+              else:
+                histos[2].Draw("histsame")
+            if "ttbar" not in self.options.output:
+              if axis == 'xz':
+                #histos[3].Draw("cont3same")
+                histos[3].SetContour(5)
+                histos[3].GetZaxis().SetRangeUser(ymin, ymax)
+              else:
+                histos[3].Draw("histsame")
         drawBox = False
-        if self.options.blind == True and axis!='z' and ( xrange == '55,215' or yrange == '55,215') :
+        if self.options.blind == True and axis!='z' and ( xrange == '55,215' or yrange == '55,215') and axis!='xz':
             drawBox = True
             hdata.GetXaxis().SetRangeUser(55,65)
             hdata.DrawCopy("sameE0")
             hdata.GetXaxis().SetRangeUser(140,215)
             hdata.Draw("samePE0")
+        elif axis == 'xz':
+            histos[0].Draw('axissame')
+            histos[0].Draw('cont3same') # Draw total background last
+            histos[0].GetZaxis().SetRangeUser(ymin, ymax)
         else:
             hdata.Draw("samePE0")
         leg.SetLineColor(0)
@@ -773,7 +859,14 @@ class Postfitplotter():
         nevents = {}
         nevents["data"]=hdata.Integral()
         if pseudo == False:
-            leg.AddEntry(hdata,"Data","ep")
+            if axis=='xz':
+              #hdata.SetLineColor(ROOT.kBlack)
+              #hdata.SetFillColor(ROOT.kBlack)
+              hdata.SetLineColor(0)
+              hdata.SetFillColor(4)
+              leg.AddEntry(hdata,"Data","F")
+            else:
+              leg.AddEntry(hdata,"Data","ep")
             hdata.Write("Data")
         else:
             leg.AddEntry(hdata,"Simulation","ep")
@@ -830,7 +923,7 @@ class Postfitplotter():
                 syst_band_fit.SetPointEXlow(i,X)
             syst_band_fit.Write("syst_band_fit")
 
-        if len(histos)>1 and "ttbar" not in self.options.output:
+        if len(histos)>1 and "ttbar" not in self.options.output and axis!="xz":
             leg.AddEntry(histos[1],"Multijet","l")  ; print "nonRes ", histos[1].Integral(); nevents["nonRes"] = histos[1].Integral()
             histos[1].Write("nonRes")
             if self.options.addTop:
@@ -907,7 +1000,10 @@ class Postfitplotter():
             text = "VBF "+text
 
         if self.options.fitSignal==True: 
-            leg.AddEntry(hsig,text,"F")
+            if axis == 'xz':
+              leg.AddEntry(hsig,text,"L")
+            else:
+              leg.AddEntry(hsig,text,"F")
             leg.AddEntry(hsig,rescaletext,"")
         leg.Draw("same")
         
@@ -934,6 +1030,8 @@ class Postfitplotter():
         #pt2 = ROOT.TPaveText(0.125,0.79,0.99,0.4,"NDC")
         #pt2 = ROOT.TPaveText(0.55,0.35,0.99,0.32,"NDC")
         pt2 = ROOT.TPaveText(0.35,0.38,0.99,0.44,"NDC")
+        if axis == 'xz':
+          pt2 = ROOT.TPaveText(0.40,0.38,0.99,0.44,"NDC")
         pt2.SetTextFont(42)
         pt2.SetTextSize(0.04)
         pt2.SetTextAlign(12)
@@ -949,6 +1047,8 @@ class Postfitplotter():
 
         #pt3 = ROOT.TPaveText(0.65,0.39,0.99,0.52,"NDC")
         pt3 = ROOT.TPaveText(0.18,0.55,0.39,0.68,"NDC")
+        if axis == 'xz':
+          pt3 = ROOT.TPaveText(0.45,0.45,0.99,0.55,"NDC")
         pt3.SetTextFont(42)
         pt3.SetTextSize(0.04)
         pt3.SetTextAlign(12)
@@ -959,47 +1059,53 @@ class Postfitplotter():
         pt3.AddText(extra2)
         pt3.Draw()
 
-        CMS_lumi.CMS_lumi(pad1, 4, 10)
+        if axis == 'xz':
+          CMS_lumi.relPosX = 0.25#19
+          CMS_lumi.CMS_lumi(pad1, 4, 13)#0
+        else:
+          CMS_lumi.CMS_lumi(pad1, 4, 10)
         
         pad1.Modified()
         pad1.Update()
         
         c.Update()
         c.cd()
-        pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
-        pad2.SetTopMargin(0.04)
-        pad2.SetBottomMargin(0.4)
-        #pad2.SetGridy()
-        pad2.Draw()
-        pad2.cd()
-        
-        #for ratio
-        #graphs = addRatioPlot(hdata,histos[0],nBins,errors[0])
-        #graphs[1].Draw("AP")
-        #graphs[0].Draw("E3same")
-        #graphs[1].Draw("Psame")
-        
-        #for pulls
-        if errors ==None: errors=[0,0];
-        if self.options.name.find('sigonly')!=-1: graphs = self.addPullPlot(hdata,hsig,nBins,errors[0])
-        else:
-            graphs = self.addPullPlot(hdata,histos[0],nBins,errors[0])
-            statgraphs = self.addStatPullPlot(hdata,histos[0],nBins)
-        # graphs = addRatioPlot(hdata,histos[0],nBins,errors[0])
-        if axis == 'z':
-            graphs[0] = self.fromGeVtoTeV(graphs[0])
-        graphs[0].Write("pulls_syst_stat")
-        statgraphs[0].Write("pulls_stat")
-        if axis == 'z':
-            graphs[0].GetXaxis().SetRangeUser(1.246,6.)
-        graphs[0].Draw("HIST")
-        if self.options.blind == True and axis != 'z' and drawBox == True:
-            box = ROOT.TBox(65,graphs[0].GetMinimum(),140,graphs[0].GetMaximum())
-            box.SetFillColor(0)
-            box.Draw("same")
+        if axis != 'xz':
+          pad2 = ROOT.TPad("pad2", "pad2", 0, 0.05, 1, 0.3)
+          pad2.SetTopMargin(0.04)
+          pad2.SetBottomMargin(0.4)
+          #pad2.SetGridy()
+          pad2.Draw()
+          pad2.cd()
+          
+          #for ratio
+          #graphs = addRatioPlot(hdata,histos[0],nBins,errors[0])
+          #graphs[1].Draw("AP")
+          #graphs[0].Draw("E3same")
+          #graphs[1].Draw("Psame")
+          
+          #for pulls
+          if errors ==None: errors=[0,0];
+          if self.options.name.find('sigonly')!=-1: graphs = self.addPullPlot(hdata,hsig,nBins,errors[0])
+          else:
+              graphs = self.addPullPlot(hdata,histos[0],nBins,errors[0])
+              statgraphs = self.addStatPullPlot(hdata,histos[0],nBins)
+          # graphs = addRatioPlot(hdata,histos[0],nBins,errors[0])
+          if axis == 'z':
+              graphs[0] = self.fromGeVtoTeV(graphs[0])
+          graphs[0].Write("pulls_syst_stat")
+          statgraphs[0].Write("pulls_stat")
+          if axis == 'z':
+              graphs[0].GetXaxis().SetRangeUser(1.246,6.)
+          graphs[0].Draw("HIST")
+          if self.options.blind == True and axis != 'z' and drawBox == True:
+              box = ROOT.TBox(65,graphs[0].GetMinimum(),140,graphs[0].GetMaximum())
+              box.SetFillColor(0)
+              box.Draw("same")
 
-        pad2.Modified()
-        pad2.Update()
+          pad2.Modified()
+          pad2.Update()
+        
         outfile.Close()
         c.cd()
         c.Update()
@@ -1014,7 +1120,7 @@ class Postfitplotter():
         #c.RedrawAxis()
         #frame = c.GetFrame()
         #frame.Draw()
-        if self.logfile!="":
+        if self.logfile!="" and axis!='xz':
             self.calculateChi2ForSig(hdata,hsig,axis,self.logfile,"\n \n projection "+extra1+"  "+extra2+" \n")
         if self.options.prelim=="":
             print "save plot as ", self.options.output+"PostFit"+self.options.label+"_"+htitle.replace(' ','_').replace('.','_').replace(':','_').replace(',','_')+".pdf"
@@ -1278,6 +1384,24 @@ class Projection():
            self.M3 = self.workspace.var("MJ2");
            for zk,zv in self.zBins_redux.iteritems():
                 self.neventsPerBin_1[zk]=0 
+        if axis=="xz":
+           self.dh = ROOT.TH2F("dh"+axis,"dh"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+           self.Bins_redux = self.zBins_redux
+           self.Bins_redux_1 = self.xBins_redux
+           self.Bins_redux_2 = self.yBins_redux
+           self.BinsWidth_1 = self.zBinsWidth
+           self.BinsWidth_2 = self.xBinsWidth
+           self.BinsWidth_3 = self.yBinsWidth
+           self.Binslowedge = self.zBinslowedge
+           # get variables from workspace 
+           self.M1 = self.workspace.var("MJJ");
+           self.M2 = self.workspace.var("MJ1");
+           self.M3 = self.workspace.var("MJ2");
+           for zk,zv in self.zBins_redux.iteritems():
+             self.neventsPerBin_1[zk]={}
+             for xk,xv in self.xBins_redux.iteritems():
+               self.neventsPerBin_1[zk][xk]=0
+
         argset = ROOT.RooArgSet();
         argset.add(self.M3);
         argset.add(self.M2);
@@ -1285,136 +1409,282 @@ class Projection():
         self.args_ws = argset
         print "initialize histograms with ",self.Binslowedge
         self.data = ROOT.RooDataHist("data"+axis,"data"+axis,self.args_ws,data)
-        self.htot_nonres = ROOT.TH1F("htot_nonres"+axis,"htot_nonres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_sig = ROOT.TH1F("htot_sig"+axis,"htot_sig"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot = ROOT.TH1F("htot"+axis,"htot"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_Wres = ROOT.TH1F("htot_Wres"+axis,"htot_Wres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_Zres = ROOT.TH1F("htot_Zres"+axis,"htot_Zres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJets = ROOT.TH1F("htot_TTJets"+axis,"htot_TTJets"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsTop = ROOT.TH1F("htot_TTJetsTop"+axis,"htot_TTJetsTop"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsW = ROOT.TH1F("htot_TTJetsW"+axis,"htot_TTJetsW"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsNonRes = ROOT.TH1F("htot_TTJetsNonRes"+axis,"htot_TTJetsNonRes"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsTnonresT = ROOT.TH1F("htot_TTJetsTnonresT"+axis,"htot_TTJetsTnonresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsWnonresT  = ROOT.TH1F("htot_TTJetsWnonresT"+axis,"htot_TTJetsWnonresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsresTresW= ROOT.TH1F("htot_TTJetsresTresW"+axis,"htot_TTJetsresTresW"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_TTJetsresWresT= ROOT.TH1F("htot_TTJetsresWresT"+axis,"htot_TTJetsresWresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_WZ = ROOT.TH1F("htot_WZ"+axis,"htot_WZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        self.htot_ZZ = ROOT.TH1F("htot_ZZ"+axis,"htot_ZZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
-        
-        for p in pdfs:
-            self.h.append( ROOT.TH1F("h_"+p.GetName(),"h_"+p.GetName(),len(self.Binslowedge)-1,self.Binslowedge))
-            self.lv.append({})
-        for i in range(0,len(pdfs)):
-            for ik,iv in self.Bins_redux.iteritems(): self.lv[i][iv]=0
-        
-        if pdf_sig!=None:
-                self.h1_sig = ROOT.TH1F("h1_"+pdf_sig.GetName(),"h1_"+pdf_sig.GetName(),len(self.Binslowedge)-1,self.Binslowedge)
-                self.lv1_sig.append({})
-                for ik,iv in self.Bins_redux.iteritems(): self.lv1_sig[0][iv]=0
-	
-    	
-        for ik, iv in self.Bins_redux_1.iteritems():
-            self.M2.setVal(iv)
-            for jk, jv in self.Bins_redux_2.iteritems():
-                self.M3.setVal(jv)
-                for kk,kv in self.Bins_redux.iteritems():
-                    self.M1.setVal(kv)
-                    self.neventsPerBin_1[kk] += self.data.weight(self.args_ws)
-                    i=0
-                    binV = self.BinsWidth_2[ik]*self.BinsWidth_3[jk]*self.BinsWidth_1[kk]
-                    for p in pdfs:
-                        if "nonRes" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["nonRes"][0].getVal()
-                        if "Wjets" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["Wjets"][0].getVal()
-                        if "Zjets" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["Zjets"][0].getVal()
-                        if "TTJetsTop_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsTop"][0].getVal()
-                        if "TTJetsW_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsW"][0].getVal()
-                        if "TTJetsNonRes_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsNonRes"][0].getVal()
-                        if "TTJetsTNonResT_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsTNonResT"][0].getVal()
-                        if "TTJetsWNonResT_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsWNonResT"][0].getVal()
-                        if "TTJetsResWResT_" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsResWResT"][0].getVal()    #; print norms["TTJetsResWResT"][0].getVal()
-                        if "WZ" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["WZ"][0].getVal()
-                        if "ZZ" in str(p.GetName()) :
-                            self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["ZZ"][0].getVal()
 
-                        i+=1
-                    if pdf_sig!=None:
-                        self.lv1_sig[0][kv] += pdf_sig.getVal(self.args_ws)*binV
+        if axis=="xz":
+
+          self.htot_nonres = ROOT.TH2F("htot_nonres"+axis,"htot_nonres"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_sig = ROOT.TH2F("htot_sig"+axis,"htot_sig"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot = ROOT.TH2F("htot"+axis,"htot"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_Wres = ROOT.TH2F("htot_Wres"+axis,"htot_Wres"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_Zres = ROOT.TH2F("htot_Zres"+axis,"htot_Zres"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJets = ROOT.TH2F("htot_TTJets"+axis,"htot_TTJets"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsTop = ROOT.TH2F("htot_TTJetsTop"+axis,"htot_TTJetsTop"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsW = ROOT.TH2F("htot_TTJetsW"+axis,"htot_TTJetsW"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsNonRes = ROOT.TH2F("htot_TTJetsNonRes"+axis,"htot_TTJetsNonRes"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsTnonresT = ROOT.TH2F("htot_TTJetsTnonresT"+axis,"htot_TTJetsTnonresT"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsWnonresT  = ROOT.TH2F("htot_TTJetsWnonresT"+axis,"htot_TTJetsWnonresT"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsresTresW= ROOT.TH2F("htot_TTJetsresTresW"+axis,"htot_TTJetsresTresW"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_TTJetsresWresT= ROOT.TH2F("htot_TTJetsresWresT"+axis,"htot_TTJetsresWresT"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_WZ = ROOT.TH2F("htot_WZ"+axis,"htot_WZ"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          self.htot_ZZ = ROOT.TH2F("htot_ZZ"+axis,"htot_ZZ"+axis,len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+          
+          for p in pdfs:
+              self.h.append( ROOT.TH2F("h_"+p.GetName(),"h_"+p.GetName(),len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge))
+              self.lv.append({})
+          for i in range(0,len(pdfs)):
+              for ik,iv in self.Bins_redux.iteritems():
+                self.lv[i][iv]={}
+                for jk,jv in self.Bins_redux_1.iteritems(): self.lv[i][iv][jv]=0
+          
+          if pdf_sig!=None:
+                  self.h1_sig = ROOT.TH2F("h1_"+pdf_sig.GetName(),"h1_"+pdf_sig.GetName(),len(self.zBinslowedge)-1,self.zBinslowedge,len(self.xBinslowedge)-1,self.xBinslowedge)
+                  self.lv1_sig.append({})
+                  for ik,iv in self.Bins_redux.iteritems():
+                    self.lv1_sig[0][iv]={}
+                    for jk,jv in self.Bins_redux_1.iteritems(): self.lv1_sig[0][iv][jv]=0
+
+          for ik, iv in self.Bins_redux_1.iteritems():
+              self.M2.setVal(iv)
+              for jk, jv in self.Bins_redux_2.iteritems():
+                   self.M3.setVal(jv)
+                   for kk,kv in self.Bins_redux.iteritems():
+                       self.M1.setVal(kv)
+                       self.neventsPerBin_1[kk][ik] += self.data.weight(self.args_ws)
+                       i=0
+                       binV = self.BinsWidth_2[ik]*self.BinsWidth_3[jk]*self.BinsWidth_1[kk]
+                       for p in pdfs:
+                           if "nonRes" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["nonRes"][0].getVal()
+                           if "Wjets" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["Wjets"][0].getVal()
+                           if "Zjets" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["Zjets"][0].getVal()
+                           if "TTJetsTop_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsTop"][0].getVal()
+                           if "TTJetsW_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsW"][0].getVal()
+                           if "TTJetsNonRes_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsNonRes"][0].getVal()
+                           if "TTJetsTNonResT_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsTNonResT"][0].getVal()
+                           if "TTJetsWNonResT_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsWNonResT"][0].getVal()
+                           if "TTJetsResWResT_" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["TTJetsResWResT"][0].getVal()    #; print norms["TTJetsResWResT"][0].getVal()
+                           if "WZ" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["WZ"][0].getVal()
+                           if "ZZ" in str(p.GetName()) :
+                               self.lv[i][kv][iv] += p.getVal(self.args_ws)*binV*norms["ZZ"][0].getVal()
+
+                           i+=1
+                       if pdf_sig!=None:
+                           self.lv1_sig[0][kv][iv] += pdf_sig.getVal(self.args_ws)*binV
+
+        else:
+
+          self.htot_nonres = ROOT.TH1F("htot_nonres"+axis,"htot_nonres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_sig = ROOT.TH1F("htot_sig"+axis,"htot_sig"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot = ROOT.TH1F("htot"+axis,"htot"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_Wres = ROOT.TH1F("htot_Wres"+axis,"htot_Wres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_Zres = ROOT.TH1F("htot_Zres"+axis,"htot_Zres"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJets = ROOT.TH1F("htot_TTJets"+axis,"htot_TTJets"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsTop = ROOT.TH1F("htot_TTJetsTop"+axis,"htot_TTJetsTop"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsW = ROOT.TH1F("htot_TTJetsW"+axis,"htot_TTJetsW"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsNonRes = ROOT.TH1F("htot_TTJetsNonRes"+axis,"htot_TTJetsNonRes"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsTnonresT = ROOT.TH1F("htot_TTJetsTnonresT"+axis,"htot_TTJetsTnonresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsWnonresT  = ROOT.TH1F("htot_TTJetsWnonresT"+axis,"htot_TTJetsWnonresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsresTresW= ROOT.TH1F("htot_TTJetsresTresW"+axis,"htot_TTJetsresTresW"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_TTJetsresWresT= ROOT.TH1F("htot_TTJetsresWresT"+axis,"htot_TTJetsresWresT"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_WZ = ROOT.TH1F("htot_WZ"+axis,"htot_WZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          self.htot_ZZ = ROOT.TH1F("htot_ZZ"+axis,"htot_ZZ"+axis,len(self.Binslowedge)-1,self.Binslowedge)
+          
+          for p in pdfs:
+              self.h.append( ROOT.TH1F("h_"+p.GetName(),"h_"+p.GetName(),len(self.Binslowedge)-1,self.Binslowedge))
+              self.lv.append({})
+          for i in range(0,len(pdfs)):
+              for ik,iv in self.Bins_redux.iteritems(): self.lv[i][iv]=0
+          
+          if pdf_sig!=None:
+            self.h1_sig = ROOT.TH1F("h1_"+pdf_sig.GetName(),"h1_"+pdf_sig.GetName(),len(self.Binslowedge)-1,self.Binslowedge)
+            self.lv1_sig.append({})
+            for ik,iv in self.Bins_redux.iteritems(): self.lv1_sig[0][iv]=0
+
+    
+          for ik, iv in self.Bins_redux_1.iteritems():
+              self.M2.setVal(iv)
+              for jk, jv in self.Bins_redux_2.iteritems():
+                  self.M3.setVal(jv)
+                  for kk,kv in self.Bins_redux.iteritems():
+                      self.M1.setVal(kv)
+                      self.neventsPerBin_1[kk] += self.data.weight(self.args_ws)
+                      i=0
+                      binV = self.BinsWidth_2[ik]*self.BinsWidth_3[jk]*self.BinsWidth_1[kk]
+                      for p in pdfs:
+                          if "nonRes" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["nonRes"][0].getVal()
+                          if "Wjets" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["Wjets"][0].getVal()
+                          if "Zjets" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["Zjets"][0].getVal()
+                          if "TTJetsTop_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsTop"][0].getVal()
+                          if "TTJetsW_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsW"][0].getVal()
+                          if "TTJetsNonRes_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsNonRes"][0].getVal()
+                          if "TTJetsTNonResT_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsTNonResT"][0].getVal()
+                          if "TTJetsWNonResT_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsWNonResT"][0].getVal()
+                          if "TTJetsResWResT_" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["TTJetsResWResT"][0].getVal()    #; print norms["TTJetsResWResT"][0].getVal()
+                          if "WZ" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["WZ"][0].getVal()
+                          if "ZZ" in str(p.GetName()) :
+                              self.lv[i][kv] += p.getVal(self.args_ws)*binV*norms["ZZ"][0].getVal()
+
+                          i+=1
+                      if pdf_sig!=None:
+                         self.lv1_sig[0][kv] += pdf_sig.getVal(self.args_ws)*binV
         return self.fillHistos(pdfs,data,norms,pdf_sig,norm_sig,show_all,plotBonly)
         
     def fillHistos(self,pdfs,data,norms,pdf_sig=None,norm_sig=None,show_all=False,plotBonly=False):
         print " make Projection ", self.axis
-        for i in range(0,len(pdfs)):
-            for ik,iv in self.Bins_redux.iteritems():
-                tmp = self.lv[i][iv]
-                if tmp >+ self.maxYaxis: self.maxYaxis = tmp
-                if "nonRes" in str(pdfs[i].GetName()) : self.htot_nonres.Fill(iv,self.lv[i][iv]); 
-                elif "Wjets" in str(pdfs[i].GetName()) : self.htot_Wres.Fill(iv,self.lv[i][iv]); 
-                elif "Zjets" in str(pdfs[i].GetName()) : self.htot_Zres.Fill(iv,self.lv[i][iv]); 
-                elif "TTJetsTop_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]); self.htot_TTJetsTop.Fill(iv,self.lv[i][iv])
-                elif "TTJetsW_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]); self.htot_TTJetsW.Fill(iv,self.lv[i][iv])
-                elif "TTJetsNonRes_" in str(pdfs[i].GetName()):
-                    #print "nonresT ",pdfs[i].GetName()
-                    self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsNonRes.Fill(iv,self.lv[i][iv])
-                elif "TTJetsTNonResT_" in str(pdfs[i].GetName()): 
-                    self.htot_TTJets.Fill(iv,self.lv[i][iv]) ;
-                    #print "TnonresT ",pdfs[i].GetName()
-                    self.htot_TTJetsTnonresT.Fill(iv,self.lv[i][iv])
-                elif "TTJetsWNonResT_" in str(pdfs[i].GetName()): 
-                    self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsWnonresT.Fill(iv,self.lv[i][iv])
-                    #print "WnonresT ",pdfs[i].GetName()
-                elif "TTJetsresWresT" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresWresT.Fill(iv,self.lv[i][iv])
-                elif "TTJetsResWResT_" in str(pdfs[i].GetName()):
-                    self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresTresW.Fill(iv,self.lv[i][iv]);
-                elif "WZ" in str(pdfs[i].GetName()) : self.htot_WZ.Fill(iv,self.lv[i][iv]);
-                elif "ZZ" in str(pdfs[i].GetName()) : self.htot_ZZ.Fill(iv,self.lv[i][iv]);
-                
-                else: self.h[i].Fill(iv,tmp);
-        
-        if pdf_sig!=None:
-            print "fill signal "
-            for ik,iv in self.Bins_redux.iteritems(): self.htot_sig.Fill(iv,self.lv1_sig[0][iv]*norm_sig[0].getVal()); # print self.lv1_sig[0][iv]*norm_sig[0]
 
-        self.htot.Add(self.htot_nonres)
-        if self.htot_Wres!=None: self.htot.Add(self.htot_Wres)
-        if self.htot_Zres!=None: self.htot.Add(self.htot_Zres)
-        if self.htot_WZ!=None: self.htot.Add(self.htot_WZ)
-        if self.htot_ZZ!=None: self.htot.Add(self.htot_ZZ)
-        if self.htot_TTJets!=None: self.htot.Add(self.htot_TTJets)
-        if self.htot_sig!=None and plotBonly == False: self.htot.Add(self.htot_sig);
-        print "htot sig ",str(self.htot_sig.Integral())
-        print "htot integral" , self.htot.Integral()
-        print "htot_Wres integral" , self.htot_Wres.Integral()
-        print "htot_WZ integral" , self.htot_WZ.Integral()
-        self.hfinals.append(self.htot)
-        if self.htot_nonres!=None: self.hfinals.append(self.htot_nonres)
-        if self.htot_Wres!=None: self.hfinals.append(self.htot_Wres)
-        if self.htot_Zres!=None: self.hfinals.append(self.htot_Zres)
-        if self.htot_TTJets!=None: self.hfinals.append(self.htot_TTJets)
-        if self.htot_WZ!=None: self.hfinals.append(self.htot_WZ)
-        if self.htot_ZZ!=None: self.hfinals.append(self.htot_ZZ)
-        if show_all:
-            if self.htot_TTJetsTop!=None: self.hfinals.append(self.htot_TTJetsTop)
-            if self.htot_TTJetsW!=None: self.hfinals.append(self.htot_TTJetsW)
-            if self.htot_TTJetsNonRes!=None: self.hfinals.append(self.htot_TTJetsNonRes)
-            if self.htot_TTJetsTnonresT!=None: self.hfinals.append(self.htot_TTJetsTnonresT)
-            if self.htot_TTJetsWnonresT!=None: self.hfinals.append(self.htot_TTJetsWnonresT)
-            if self.htot_TTJetsresTresW!=None: self.hfinals.append(self.htot_TTJetsresTresW)
-        #for i in range(10,len(h)): hfinals.append(h[i])    
-        for b,v in self.neventsPerBin_1.iteritems(): self.dh.SetBinContent(b,self.neventsPerBin_1[b]);
-        self.dh.SetBinErrorOption(ROOT.TH1.kPoisson)
-        if self.doFit:
-            errors = self.draw_error_band(norms,pdfs[-1],pdf_sig)
-        else: errors =  None
+        if self.axis=="xz":
+
+          for i in range(0,len(pdfs)):
+              for ik,iv in self.Bins_redux.iteritems():
+                for jk,jv in self.Bins_redux_1.iteritems():
+                  tmp = self.lv[i][iv][jv]
+                  if tmp >+ self.maxYaxis: self.maxYaxis = tmp
+                  if "nonRes" in str(pdfs[i].GetName()) : self.htot_nonres.Fill(iv,jv,self.lv[i][iv][jv]); 
+                  elif "Wjets" in str(pdfs[i].GetName()) : self.htot_Wres.Fill(iv,jv,self.lv[i][iv][jv]); 
+                  elif "Zjets" in str(pdfs[i].GetName()) : self.htot_Zres.Fill(iv,jv,self.lv[i][iv][jv]); 
+                  elif "TTJetsTop_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]); self.htot_TTJetsTop.Fill(iv,jv,self.lv[i][iv][jv])
+                  elif "TTJetsW_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]); self.htot_TTJetsW.Fill(iv,jv,self.lv[i][iv][jv])
+                  elif "TTJetsNonRes_" in str(pdfs[i].GetName()):
+                      #print "nonresT ",pdfs[i].GetName()
+                      self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]) ; self.htot_TTJetsNonRes.Fill(iv,jv,self.lv[i][iv][jv])
+                  elif "TTJetsTNonResT_" in str(pdfs[i].GetName()): 
+                      self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]) ;
+                      #print "TnonresT ",pdfs[i].GetName()
+                      self.htot_TTJetsTnonresT.Fill(iv,jv,self.lv[i][iv][jv])
+                  elif "TTJetsWNonResT_" in str(pdfs[i].GetName()): 
+                      self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]) ; self.htot_TTJetsWnonresT.Fill(iv,jv,self.lv[i][iv][jv])
+                      #print "WnonresT ",pdfs[i].GetName()
+                  elif "TTJetsresWresT" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]) ; self.htot_TTJetsresWresT.Fill(iv,jv,self.lv[i][iv][jv])
+                  elif "TTJetsResWResT_" in str(pdfs[i].GetName()):
+                      self.htot_TTJets.Fill(iv,jv,self.lv[i][iv][jv]) ; self.htot_TTJetsresTresW.Fill(iv,jv,self.lv[i][iv][jv]);
+                  elif "WZ" in str(pdfs[i].GetName()) : self.htot_WZ.Fill(iv,jv,self.lv[i][iv][jv]);
+                  elif "ZZ" in str(pdfs[i].GetName()) : self.htot_ZZ.Fill(iv,jv,self.lv[i][iv][jv]);
+                  
+                  else: self.h[i].Fill(iv,tmp);
+          
+          if pdf_sig!=None:
+              print "fill signal "
+              for ik,iv in self.Bins_redux.iteritems():
+                for jk,jv in self.Bins_redux_1.iteritems():
+                  self.htot_sig.Fill(iv,jv,self.lv1_sig[0][iv][jv]*norm_sig[0].getVal()); # print self.lv1_sig[0][iv]*norm_sig[0]
+
+          self.htot.Add(self.htot_nonres)
+          if self.htot_Wres!=None: self.htot.Add(self.htot_Wres)
+          if self.htot_Zres!=None: self.htot.Add(self.htot_Zres)
+          if self.htot_WZ!=None: self.htot.Add(self.htot_WZ)
+          if self.htot_ZZ!=None: self.htot.Add(self.htot_ZZ)
+          if self.htot_TTJets!=None: self.htot.Add(self.htot_TTJets)
+          if self.htot_sig!=None and plotBonly == False: self.htot.Add(self.htot_sig);
+          print "htot sig ",str(self.htot_sig.Integral())
+          print "htot integral" , self.htot.Integral()
+          print "htot_Wres integral" , self.htot_Wres.Integral()
+          print "htot_WZ integral" , self.htot_WZ.Integral()
+          self.hfinals.append(self.htot)
+          if self.htot_nonres!=None: self.hfinals.append(self.htot_nonres)
+          if self.htot_Wres!=None: self.hfinals.append(self.htot_Wres)
+          if self.htot_Zres!=None: self.hfinals.append(self.htot_Zres)
+          if self.htot_TTJets!=None: self.hfinals.append(self.htot_TTJets)
+          if self.htot_WZ!=None: self.hfinals.append(self.htot_WZ)
+          if self.htot_ZZ!=None: self.hfinals.append(self.htot_ZZ)
+          if show_all:
+              if self.htot_TTJetsTop!=None: self.hfinals.append(self.htot_TTJetsTop)
+              if self.htot_TTJetsW!=None: self.hfinals.append(self.htot_TTJetsW)
+              if self.htot_TTJetsNonRes!=None: self.hfinals.append(self.htot_TTJetsNonRes)
+              if self.htot_TTJetsTnonresT!=None: self.hfinals.append(self.htot_TTJetsTnonresT)
+              if self.htot_TTJetsWnonresT!=None: self.hfinals.append(self.htot_TTJetsWnonresT)
+              if self.htot_TTJetsresTresW!=None: self.hfinals.append(self.htot_TTJetsresTresW)
+          #for i in range(10,len(h)): hfinals.append(h[i])    
+          for b,v in self.neventsPerBin_1.iteritems():
+            for bx,vx in v.iteritems():
+                self.dh.SetBinContent(b,bx,self.neventsPerBin_1[b][bx]);
+          self.dh.SetBinErrorOption(ROOT.TH1.kPoisson)
+          if self.doFit:
+              errors = self.draw_error_band(norms,pdfs[-1],pdf_sig)
+          else: errors =  None
+
+        else:  
+
+          for i in range(0,len(pdfs)):
+              for ik,iv in self.Bins_redux.iteritems():
+                  tmp = self.lv[i][iv]
+                  if tmp >+ self.maxYaxis: self.maxYaxis = tmp
+                  if "nonRes" in str(pdfs[i].GetName()) : self.htot_nonres.Fill(iv,self.lv[i][iv]); 
+                  elif "Wjets" in str(pdfs[i].GetName()) : self.htot_Wres.Fill(iv,self.lv[i][iv]); 
+                  elif "Zjets" in str(pdfs[i].GetName()) : self.htot_Zres.Fill(iv,self.lv[i][iv]); 
+                  elif "TTJetsTop_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]); self.htot_TTJetsTop.Fill(iv,self.lv[i][iv])
+                  elif "TTJetsW_" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]); self.htot_TTJetsW.Fill(iv,self.lv[i][iv])
+                  elif "TTJetsNonRes_" in str(pdfs[i].GetName()):
+                      #print "nonresT ",pdfs[i].GetName()
+                      self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsNonRes.Fill(iv,self.lv[i][iv])
+                  elif "TTJetsTNonResT_" in str(pdfs[i].GetName()): 
+                      self.htot_TTJets.Fill(iv,self.lv[i][iv]) ;
+                      #print "TnonresT ",pdfs[i].GetName()
+                      self.htot_TTJetsTnonresT.Fill(iv,self.lv[i][iv])
+                  elif "TTJetsWNonResT_" in str(pdfs[i].GetName()): 
+                      self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsWnonresT.Fill(iv,self.lv[i][iv])
+                      #print "WnonresT ",pdfs[i].GetName()
+                  elif "TTJetsresWresT" in str(pdfs[i].GetName()): self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresWresT.Fill(iv,self.lv[i][iv])
+                  elif "TTJetsResWResT_" in str(pdfs[i].GetName()):
+                      self.htot_TTJets.Fill(iv,self.lv[i][iv]) ; self.htot_TTJetsresTresW.Fill(iv,self.lv[i][iv]);
+                  elif "WZ" in str(pdfs[i].GetName()) : self.htot_WZ.Fill(iv,self.lv[i][iv]);
+                  elif "ZZ" in str(pdfs[i].GetName()) : self.htot_ZZ.Fill(iv,self.lv[i][iv]);
+                  
+                  else: self.h[i].Fill(iv,tmp);
+          
+          if pdf_sig!=None:
+              print "fill signal "
+              for ik,iv in self.Bins_redux.iteritems(): self.htot_sig.Fill(iv,self.lv1_sig[0][iv]*norm_sig[0].getVal()); # print self.lv1_sig[0][iv]*norm_sig[0]
+
+          self.htot.Add(self.htot_nonres)
+          if self.htot_Wres!=None: self.htot.Add(self.htot_Wres)
+          if self.htot_Zres!=None: self.htot.Add(self.htot_Zres)
+          if self.htot_WZ!=None: self.htot.Add(self.htot_WZ)
+          if self.htot_ZZ!=None: self.htot.Add(self.htot_ZZ)
+          if self.htot_TTJets!=None: self.htot.Add(self.htot_TTJets)
+          if self.htot_sig!=None and plotBonly == False: self.htot.Add(self.htot_sig);
+          print "htot sig ",str(self.htot_sig.Integral())
+          print "htot integral" , self.htot.Integral()
+          print "htot_Wres integral" , self.htot_Wres.Integral()
+          print "htot_WZ integral" , self.htot_WZ.Integral()
+          self.hfinals.append(self.htot)
+          if self.htot_nonres!=None: self.hfinals.append(self.htot_nonres)
+          if self.htot_Wres!=None: self.hfinals.append(self.htot_Wres)
+          if self.htot_Zres!=None: self.hfinals.append(self.htot_Zres)
+          if self.htot_TTJets!=None: self.hfinals.append(self.htot_TTJets)
+          if self.htot_WZ!=None: self.hfinals.append(self.htot_WZ)
+          if self.htot_ZZ!=None: self.hfinals.append(self.htot_ZZ)
+          if show_all:
+              if self.htot_TTJetsTop!=None: self.hfinals.append(self.htot_TTJetsTop)
+              if self.htot_TTJetsW!=None: self.hfinals.append(self.htot_TTJetsW)
+              if self.htot_TTJetsNonRes!=None: self.hfinals.append(self.htot_TTJetsNonRes)
+              if self.htot_TTJetsTnonresT!=None: self.hfinals.append(self.htot_TTJetsTnonresT)
+              if self.htot_TTJetsWnonresT!=None: self.hfinals.append(self.htot_TTJetsWnonresT)
+              if self.htot_TTJetsresTresW!=None: self.hfinals.append(self.htot_TTJetsresTresW)
+          #for i in range(10,len(h)): hfinals.append(h[i])    
+          for b,v in self.neventsPerBin_1.iteritems(): self.dh.SetBinContent(b,self.neventsPerBin_1[b]);
+          self.dh.SetBinErrorOption(ROOT.TH1.kPoisson)
+          if self.doFit:
+              errors = self.draw_error_band(norms,pdfs[-1],pdf_sig)
+          else: errors =  None
         return [self.hfinals,self.dh, self.htot_sig,self.axis,self.Binslowedge,self.maxYaxis, norm_sig[0],errors]
         
     
